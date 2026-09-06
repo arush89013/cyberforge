@@ -3,58 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberForge Security</title>
+    <title>CyberForge - Secure Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- AUTHENTICATION VIEW (Sign In & Sign Up) -->
-    <div id="auth-view" class="glass-panel">
-        <div class="logo">🛡️ CyberForge</div>
-
-        <div class="tab-container">
-            <button id="tab-login" class="tab active-tab">Sign In</button>
-            <button id="tab-register" class="tab">Sign Up</button>
+    <main class="cf-login-page">
+        <!-- LOGO -->
+        <div class="cf-login-logo">
+            <div class="cf-login-icon">🔐</div>
+            <h1>Cyber<span>Forge</span></h1>
+            <p>Secure payments. Safer you.</p>
         </div>
 
-        <!-- Login Form -->
-        <form id="loginForm">
-            <input type="text" id="login-user" placeholder="Username" required>
-            <input type="password" id="login-pass" placeholder="Password" required>
-            <button type="submit" class="glow-btn">Authenticate</button>
-        </form>
+        <!-- AUTH CARD -->
+        <section class="cf-login-card">
+            
+            <!-- TOGGLE BUTTONS -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="tabLogin" class="cf-login-button" style="margin-top: 0;">Sign In</button>
+                <button id="tabRegister" class="cf-login-button" style="margin-top: 0; background: #15191e; border: 1px solid #303943; color: #8993a0;">Sign Up</button>
+            </div>
 
-        <!-- Register Form (Hidden by default) -->
-        <form id="registerForm" style="display: none;">
-            <input type="text" id="reg-user" placeholder="Choose a Username" required>
-            <input type="password" id="reg-pass" placeholder="Create a Password" required>
-            <button type="submit" class="glow-btn">Create Account</button>
-        </form>
+            <div class="login-heading">
+                <h2 id="authTitle">Welcome back</h2>
+                <p id="authSubtitle">Sign in to access your secure account</p>
+            </div>
 
-        <p id="auth-message" class="system-text"></p>
-    </div>
+            <!-- LOGIN FORM -->
+            <form id="loginForm">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter your username" required>
 
-    <!-- DASHBOARD VIEW -->
-    <div id="dashboard-view" class="glass-panel" style="display: none; max-width: 600px;">
-        <div class="header">
-            <h2>Welcome, <span id="display-name" class="highlight"></span></h2>
-            <button id="logoutBtn" class="secondary-btn">Disconnect</button>
-        </div>
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
 
-        <div class="card">
-            <h3>Initiate Secure Transfer</h3>
-            <form id="transferForm">
-                <input type="text" id="recipient" placeholder="Recipient Account (e.g., ACC-123)" required>
-                <input type="number" id="amount" placeholder="Amount (INR)" required>
-                <button type="submit" class="glow-btn">Execute Transfer</button>
+                <button type="submit" id="loginBtn" class="cf-login-button">Sign in securely</button>
             </form>
-            <p id="transfer-message" class="system-text"></p>
-        </div>
 
-        <div class="card">
-            <h3>Audit Log</h3>
-            <ul id="history-list"></ul>
-        </div>
-    </div>
+            <!-- REGISTER FORM -->
+            <form id="registerForm" class="hidden">
+                <label for="regUsername">Choose Username</label>
+                <input type="text" id="regUsername" placeholder="Create a username" required>
+
+                <label for="regPassword">Create Password</label>
+                <input type="password" id="regPassword" placeholder="Create a strong password" required>
+
+                <button type="submit" id="regBtn" class="cf-login-button">Create Account</button>
+            </form>
+
+            <p id="auth-message" style="text-align: center; margin-top: 15px; font-weight: bold;"></p>
+
+            <!-- SECURITY INFORMATION -->
+            <div class="cf-login-protection">
+                <div>🛡️</div>
+                <div>
+                    <strong>CyberForge Protection</strong>
+                    <p>Risk analysis + hardware authentication</p>
+                </div>
+            </div>
+        </section>
+
+        <p class="cf-login-footer">Protected by CyberForge Security</p>
+    </main>
 
     <script src="script.js"></script>
 </body>

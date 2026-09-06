@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberForge Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="cf-home">
+        <!-- HEADER -->
+        <header class="cf-header">
+            <div class="cf-brand">
+                <div class="cf-logo">🔐</div>
+                <div>
+                    <h1>Cyber<span>Forge</span></h1>
+                    <p>Secure payments. Safer you.</p>
+                </div>
+            </div>
+            <div class="cf-profile" id="userAvatar">U</div>
+        </header>
+
+        <!-- SEARCH -->
+        <section class="cf-search">
+            <span class="search-icon">⌕</span>
+            <input type="text" placeholder="Pay friends, businesses and more">
+            <!-- QR Button Removed -->
+        </section>
+
+        <!-- SECURITY BANNER -->
+        <section class="security-banner">
+            <div class="security-content">
+                <small>SECURITY FIRST</small>
+                <h2>Welcome, <span id="welcomeName">User</span></h2>
+                <p>AI-powered risk analysis and hardware authentication keep your money safe.</p>
+                <button id="logoutBtn">Logout Securely</button>
+            </div>
+            <div class="security-art">🛡️</div>
+        </section>
+
+        <!-- QUICK ACTIONS (QR Removed) -->
+        <section class="quick-actions" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="quick-action" onclick="window.location.href='transfer.html'">
+                <div class="quick-icon">₹</div>
+                <p>Pay<br>anyone</p>
+            </div>
+            <div class="quick-action">
+                <div class="quick-icon">🏦</div>
+                <p>Bank<br>transfer</p>
+            </div>
+            <div class="quick-action">
+                <div class="quick-icon">📱</div>
+                <p>Mobile<br>recharge</p>
+            </div>
+        </section>
+
+        <!-- BALANCE -->
+        <section class="cf-balance">
+            <div>
+                <p>Your Balance</p>
+                <h2>₹50,000.00</h2>
+                <span>CyberForge Secure Account</span>
+            </div>
+            <div class="balance-security">
+                <div>🛡️</div>
+                <p>Protected by<br><strong>CyberForge</strong></p>
+            </div>
+        </section>
+
+        <!-- RECENT TRANSACTIONS -->
+        <section class="cf-section transactions-section">
+            <div class="section-title">
+                <h2>Recent transactions</h2>
+            </div>
+            <div id="transactionList">
+                <!-- Data loads here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="cf-bottom-nav">
+        <div class="cf-nav active"><span>⌂</span><p>Home</p></div>
+        <div class="cf-nav" onclick="window.location.href='transfer.html'"><span>₹</span><p>Money</p></div>
+        <div class="cf-nav"><span>▥</span><p>Activity</p></div>
+        <div class="cf-nav"><span>◯</span><p>You</p></div>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+</html>
