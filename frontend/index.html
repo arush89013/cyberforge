@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CyberForge - Secure Login</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="cf-login-page">
+
+        <!-- LOGO -->
+        <div class="cf-login-logo">
+
+            <div class="cf-login-icon">
+                🔐
+            </div>
+
+            <h1>
+                Cyber<span>Forge</span>
+            </h1>
+
+            <p>
+                Secure payments. Safer you.
+            </p>
+
+        </div>
+
+
+        <!-- LOGIN CARD -->
+        <section class="cf-login-card">
+
+            <div class="login-heading">
+
+                <h2>
+                    Welcome back
+                </h2>
+
+                <p>
+                    Sign in to access your secure account
+                </p>
+
+            </div>
+
+
+            <!-- LOGIN FORM -->
+            <form id="loginForm">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <input
+                    type="text"
+                    id="username"
+                    placeholder="Enter your username"
+                    autocomplete="username"
+                    required
+                >
+
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+
+                <button
+                    type="submit"
+                    class="cf-login-button"
+                >
+                    Sign in securely
+                </button>
+
+            </form>
+
+
+            <!-- CYBERFORGE SECURITY CENTER -->
+<div
+    id="securityStatus"
+    class="cf-login-security hidden"
+>
+
+    <div class="security-center">
+
+        <!-- Animated shield -->
+        <div class="security-ring">
+
+            <div class="security-core">
+                🛡️
+            </div>
+
+        </div>
+
+
+        <div class="security-center-label">
+            CYBERFORGE SECURITY
+        </div>
+
+
+        <h3 id="statusTitle">
+            Analyzing login risk...
+        </h3>
+
+
+        <p id="statusMessage">
+            Checking your request for suspicious activity
+        </p>
+
+
+        <!-- SECURITY CHECKS -->
+
+        <div class="security-checks">
+
+            <div class="security-check">
+
+                <span
+                    id="deviceCheck"
+                    class="check-icon checking"
+                >
+                    ◉
+                </span>
+
+                <div>
+                    <strong>Device verification</strong>
+                    <small>Checking device security</small>
+                </div>
+
+            </div>
+
+
+            <div class="security-check">
+
+                <span
+                    id="locationCheck"
+                    class="check-icon checking"
+                >
+                    ◉
+                </span>
+
+                <div>
+                    <strong>Risk analysis</strong>
+                    <small>Analyzing login behavior</small>
+                </div>
+
+            </div>
+
+
+            <div class="security-check">
+
+                <span
+                    id="hardwareCheck"
+                    class="check-icon pending"
+                >
+                    ○
+                </span>
+
+                <div>
+                    <strong>Hardware authentication</strong>
+                    <small id="hardwareStatus">
+                        Waiting for risk decision
+                    </small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RISK SCORE -->
+
+        <div
+            id="loginRiskScore"
+            class="login-risk-score"
+        >
+            Risk Score: Analyzing...
+        </div>
+
+    </div>
+
+</div>
+
+
+            <!-- SECURITY INFORMATION -->
+            <div class="cf-login-protection">
+
+                <div>
+                    🛡️
+                </div>
+
+                <div>
+
+                    <strong>
+                        CyberForge Protection
+                    </strong>
+
+                    <p>
+                        Risk analysis + hardware authentication
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <p class="cf-login-footer">
+            Protected by CyberForge Security
+        </p>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
