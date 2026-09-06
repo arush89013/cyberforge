@@ -90,17 +90,20 @@ def check_hardware_requests(user_id: int, db: Session = Depends(get_db)):
         "recipient": pending.recipient_account
     }
 
+
 @app.post("/api/users/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Create a new user in the database
+    # Create a new user without forcing the ID!
+    # MySQL will auto-increment it automatically.
     new_user = models.User(
-        id=101,  # Forcing the ID to be 101 just for your current test
         username=user.username,
-        password_hash=user.password # We will encrypt this later!
+        password_hash=user.password
     )
     db.add(new_user)
     db.commit()
-    return {"message": "User 101 created successfully!"}
+    db.refresh(new_user)  # This grabs the newly generated ID from MySQL
+
+    return {"message": f"User {new_user.id} created successfully!"}
 
 @app.post("/api/hardware/verify")
 def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(get_db)):
@@ -136,3 +139,7 @@ def get_recent_transactions(user_id: int, db: Session = Depends(get_db)):
     ).order_by(models.Transaction.timestamp.desc()).limit(10).all()
 
     return transactions
+
+
+#venv\Scripts\activate
+#uvicorn main:app --reload
