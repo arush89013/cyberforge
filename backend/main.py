@@ -9,6 +9,16 @@ import random
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Banking Sentinel API")
+from fastapi.middleware.cors import CORSMiddleware
+
+# This allows Neeraj's HTML file to talk to your server
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_db():
@@ -106,3 +116,23 @@ def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(
 
     db.commit()
     return {"message": f"Transaction {tx.id} updated to {tx.status}"}
+
+
+@app.post("/api/users/login")
+def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.username == user.username).first()
+
+    if not db_user or db_user.password_hash != user.password:
+        return {"status": "error", "message": "Invalid username or password"}
+
+    return {"status": "success", "user_id": db_user.id, "username": db_user.username}
+
+
+@app.get("/api/transactions/recent/{user_id}")
+def get_recent_transactions(user_id: int, db: Session = Depends(get_db)):
+    # Fetch the 10 most recent transactions for this user
+    transactions = db.query(models.Transaction).filter(
+        models.Transaction.user_id == user_id
+    ).order_by(models.Transaction.timestamp.desc()).limit(10).all()
+
+    return transactions
