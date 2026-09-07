@@ -31,51 +31,60 @@ def get_db():
         db.close()
 
 
+# Inside main.py (Scroll down to the transfer route)
 @app.post("/api/transactions/transfer")
 def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_db)):
+    # 1. DYNAMIC PROFILING: Has this user succeeded from this IP/Device before?
+    known_ip = db.query(models.Transaction).filter(
+        models.Transaction.user_id == tx.user_id,
+        models.Transaction.location_ip == tx.location_ip,
+        models.Transaction.status == "Completed"
+    ).first() is not None
+
+    known_device = db.query(models.Transaction).filter(
+        models.Transaction.user_id == tx.user_id,
+        models.Transaction.device_info == tx.device_info,
+        models.Transaction.status == "Completed"
+    ).first() is not None
+
+    # 2. ASK THE HARDER AI
+    transaction_data = {
+        "amount": tx.amount,
+        "is_known_ip": known_ip,
+        "is_known_device": known_device
+    }
+    ai_result = evaluate_risk(transaction_data)
+    actual_risk_score = ai_result["risk_score"]
+
+    # 3. DECISION ENGINE
+    if actual_risk_score < 30:
+        final_status = "Completed"
+        action = "ALLOW"
+    elif actual_risk_score < 75:
+        final_status = "OTP_Awaiting"
+        action = "REQUIRE_OTP"
+    else:
+        final_status = "ESP32_Awaiting"
+        action = "REQUIRE_HARDWARE_AUTH"
+
+    # 4. SAVE TO DATABASE (Now includes device and IP)
     new_tx = models.Transaction(
         user_id=tx.user_id,
         amount=tx.amount,
         recipient_account=tx.recipient,
-        status="Pending"
+        status=final_status,
+        device_info=tx.device_info,
+        location_ip=tx.location_ip
     )
     db.add(new_tx)
     db.commit()
     db.refresh(new_tx)
 
-    # -----------------------------------------
-    # LIVE AI RISK EVALUATION
-    # -----------------------------------------
-    transaction_data = {
-        "amount": tx.amount,
-        "device_info": tx.device_info,
-        "location_ip": tx.location_ip
-    }
-
-    ai_result = evaluate_risk(transaction_data)
-    actual_risk_score = ai_result["risk_score"]
-
-    # -----------------------------------------
-    # TEMPORARY DECISION LOGIC (Until Divyank is ready)
-    # -----------------------------------------
-    if actual_risk_score < 30:
-        new_tx.status = "Completed"
-        action = "ALLOW"
-    elif actual_risk_score < 75:
-        new_tx.status = "OTP_Awaiting"
-        action = "REQUIRE_OTP"
-    else:
-        new_tx.status = "ESP32_Awaiting"
-        action = "REQUIRE_HARDWARE_AUTH"
-
-    db.commit()
-
-    # (Divyank's AuditLog database code removed for now)
-
     return {
         "transaction_id": new_tx.id,
         "risk_score": actual_risk_score,
-        "action": action
+        "action": action,
+        "flags": ai_result["flags"]
     }
 
 @app.get("/api/hardware/pending_requests")

@@ -1,38 +1,48 @@
 import pickle
 import os
+import warnings
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(current_dir, "models", "risk_model.pkl")
+warnings.filterwarnings("ignore", category=UserWarning)
+
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "risk_model.pkl")
 
 try:
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 except FileNotFoundError:
     model = None
-    print("Warning: risk_model.pkl not found.")
 
 
 def evaluate_risk(transaction_data: dict) -> dict:
-    if model is None:
-        return {"risk_score": 50.0, "flags": ["model_missing"]}
+    if model is None: return {"risk_score": 50.0, "flags": ["model_missing"]}
 
-    amount = transaction_data.get("amount", 0.0)
+    amount = float(transaction_data.get("amount", 0.0))
+    is_known_ip = transaction_data.get("is_known_ip", False)
+    is_known_device = transaction_data.get("is_known_device", False)
 
-    # ML predict returns 1 for normal, -1 for anomaly
-    prediction = model.predict([[amount]])
+    # Risk weights
+    location_risk = 0.1 if is_known_ip else 0.85
+    device_risk = 0.1 if is_known_device else 0.90
+
+    raw_score = model.decision_function([[amount, location_risk, device_risk]])[0]
+    base_risk = (0.15 - raw_score) * 200
+    risk_score = max(5.0, min(95.0, base_risk))
+
+    # ---------------------------------------------------------
+    # TRUST BONUS: If the user device AND IP are recognized,
+    # and the amount is safe, heavily reward them with trust!
+    # ---------------------------------------------------------
+    if is_known_ip and is_known_device and amount <= 10000:
+        risk_score = 15.0  # Well below the 30-point OTP threshold!
+
+    # Hard Bank Guardrails
+    if amount >= 50000:
+        risk_score = max(risk_score, 78.0)  # Forces ESP32
+    elif amount >= 10000 and risk_score < 30:
+        risk_score = max(risk_score, 45.0)  # Forces OTP for medium amounts
 
     flags = []
-    # Force extreme scores so the demo UI triggers perfectly!
-    if prediction[0] == 1:
-        # ML says it's normal
-        normalized_risk = 20.0
-    else:
-        # ML caught the massive anomaly
-        normalized_risk = 88.0
-        flags.append("highly_anomalous_amount")
+    if not is_known_device: flags.append("new_device")
+    if not is_known_ip: flags.append("new_location")
 
-    return {
-        "risk_score": float(normalized_risk),
-        "anomaly_detected": bool(prediction[0] == -1),
-        "flags": flags
-    }
+    return {"risk_score": float(round(risk_score, 1)), "flags": flags}

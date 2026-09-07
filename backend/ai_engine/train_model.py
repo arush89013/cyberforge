@@ -1,3 +1,4 @@
+# Inside ai_engine/train_model.py
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import IsolationForest
@@ -5,43 +6,33 @@ import pickle
 import os
 
 
-def generate_mock_data(num_samples=1000):
-    """Generates synthetic transaction data for initial training."""
+def generate_behavioral_data():
     np.random.seed(42)
-
-    # Normal transactions (Low amounts)
-    normal_amounts = np.random.uniform(10, 5000, int(num_samples * 0.95))
-
-    # Fraudulent transactions (Massive amounts)
-    fraud_amounts = np.random.uniform(20000, 100000, int(num_samples * 0.05))
-
-    all_amounts = np.concatenate([normal_amounts, fraud_amounts])
-
-    df = pd.DataFrame({"amount": all_amounts})
-    return df
+    # Normal: low amount, low location risk, low device risk
+    df_normal = pd.DataFrame({
+        "amount": np.random.uniform(10, 8000, 2000),
+        "location_risk": np.random.uniform(0.0, 0.2, 2000),
+        "device_risk": np.random.uniform(0.0, 0.2, 2000)
+    })
+    # Fraud: massive amount, high location risk, high device risk
+    df_fraud = pd.DataFrame({
+        "amount": np.random.uniform(20000, 100000, 300),
+        "location_risk": np.random.uniform(0.8, 1.0, 300),
+        "device_risk": np.random.uniform(0.8, 1.0, 300)
+    })
+    return pd.concat([df_normal, df_fraud], ignore_index=True)
 
 
 def train_and_save_model():
-    print("1. Generating synthetic transaction data...")
-    df = generate_mock_data()
+    df = generate_behavioral_data()
+    model = IsolationForest(contamination=0.15, random_state=42)
+    model.fit(df[['amount', 'location_risk', 'device_risk']])
 
-    print("2. Training Isolation Forest Anomaly Detector...")
-    # Isolation Forest isolates anomalies (like unusually large transfers)
-    model = IsolationForest(contamination=0.05, random_state=42)
-    model.fit(df[['amount']])
-
-    # Ensure the models directory exists
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    models_dir = os.path.join(current_dir, "models")
+    models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
     os.makedirs(models_dir, exist_ok=True)
-
-    model_path = os.path.join(models_dir, "risk_model.pkl")
-    print(f"3. Saving trained model to {model_path}...")
-
-    with open(model_path, "wb") as f:
+    with open(os.path.join(models_dir, "risk_model.pkl"), "wb") as f:
         pickle.dump(model, f)
-
-    print("✅ Training complete. The .pkl file is ready for the backend!")
+    print("✅ 3D Behavioral Model trained!")
 
 
 if __name__ == "__main__":

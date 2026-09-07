@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -8,7 +9,8 @@ class TransactionCreate(BaseModel):
     amount: float
     recipient: str
     device_info: str
-    location_ip: str
+    device_info: Optional[str] = "unknown"
+    location_ip: Optional[str] = "unknown"
 
 class HardwareVerify(BaseModel):
     transaction_id: int
