@@ -5,6 +5,8 @@ import models
 import schemas
 import random
 
+from ai_engine.predictor import evaluate_risk
+
 # Automatically create tables in MySQL
 Base.metadata.create_all(bind=engine)
 
@@ -41,14 +43,25 @@ def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_d
     db.commit()
     db.refresh(new_tx)
 
-    # MOCK AI CALL
-    mock_risk_score = random.choice([20.0, 60.0, 90.0])
+    # -----------------------------------------
+    # LIVE AI RISK EVALUATION
+    # -----------------------------------------
+    transaction_data = {
+        "amount": tx.amount,
+        "device_info": tx.device_info,
+        "location_ip": tx.location_ip
+    }
 
-    # MOCK DECISION ENGINE
-    if mock_risk_score < 30:
+    ai_result = evaluate_risk(transaction_data)
+    actual_risk_score = ai_result["risk_score"]
+
+    # -----------------------------------------
+    # TEMPORARY DECISION LOGIC (Until Divyank is ready)
+    # -----------------------------------------
+    if actual_risk_score < 30:
         new_tx.status = "Completed"
         action = "ALLOW"
-    elif mock_risk_score < 75:
+    elif actual_risk_score < 75:
         new_tx.status = "OTP_Awaiting"
         action = "REQUIRE_OTP"
     else:
@@ -57,21 +70,13 @@ def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_d
 
     db.commit()
 
-    # Log to Audit Table
-    audit = models.AuditLog(
-        transaction_id=new_tx.id,
-        risk_score=mock_risk_score,
-        decision_reason=action
-    )
-    db.add(audit)
-    db.commit()
+    # (Divyank's AuditLog database code removed for now)
 
     return {
         "transaction_id": new_tx.id,
-        "risk_score": mock_risk_score,
+        "risk_score": actual_risk_score,
         "action": action
     }
-
 
 @app.get("/api/hardware/pending_requests")
 def check_hardware_requests(user_id: int, db: Session = Depends(get_db)):
