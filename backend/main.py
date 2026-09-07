@@ -34,29 +34,38 @@ def get_db():
 # Inside main.py (Scroll down to the transfer route)
 @app.post("/api/transactions/transfer")
 def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_db)):
-    # 1. DYNAMIC PROFILING: Has this user succeeded from this IP/Device before?
+    # ----------------------------------------------------
+    # TRUE MULTI-LOCATION & DEVICE PROFILING
+    # ----------------------------------------------------
+    # Check if this *specific* user has used this IP or Device
+    # in any past transaction that wasn't outright rejected.
     known_ip = db.query(models.Transaction).filter(
         models.Transaction.user_id == tx.user_id,
         models.Transaction.location_ip == tx.location_ip,
-        models.Transaction.status == "Completed"
+        models.Transaction.status.in_(["Completed", "OTP_Awaiting", "ESP32_Awaiting"])
     ).first() is not None
 
     known_device = db.query(models.Transaction).filter(
         models.Transaction.user_id == tx.user_id,
         models.Transaction.device_info == tx.device_info,
-        models.Transaction.status == "Completed"
+        models.Transaction.status.in_(["Completed", "OTP_Awaiting", "ESP32_Awaiting"])
     ).first() is not None
 
-    # 2. ASK THE HARDER AI
+    # ----------------------------------------------------
+    # AI RISK EVALUATION
+    # ----------------------------------------------------
     transaction_data = {
         "amount": tx.amount,
         "is_known_ip": known_ip,
         "is_known_device": known_device
     }
+
     ai_result = evaluate_risk(transaction_data)
     actual_risk_score = ai_result["risk_score"]
 
-    # 3. DECISION ENGINE
+    # ----------------------------------------------------
+    # DECISION ENGINE
+    # ----------------------------------------------------
     if actual_risk_score < 30:
         final_status = "Completed"
         action = "ALLOW"
@@ -67,7 +76,9 @@ def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_d
         final_status = "ESP32_Awaiting"
         action = "REQUIRE_HARDWARE_AUTH"
 
-    # 4. SAVE TO DATABASE (Now includes device and IP)
+    # ----------------------------------------------------
+    # SAVE TO DATABASE
+    # ----------------------------------------------------
     new_tx = models.Transaction(
         user_id=tx.user_id,
         amount=tx.amount,
