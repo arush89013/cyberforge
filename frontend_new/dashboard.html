@@ -33,7 +33,6 @@
                 <small>SECURITY FIRST</small>
                 <h2>Welcome, <span id="welcomeName">User</span></h2>
                 <p>AI-powered risk analysis and hardware authentication keep your money safe.</p>
-                <button id="logoutBtn">Logout Securely</button>
             </div>
             <div class="security-art">🛡️</div>
         </section>
@@ -76,6 +75,39 @@
                 <!-- Data loads here -->
             </div>
         </section>
+        <!-- PROFILE & SECURITY MODAL -->
+        <div id="profileModal" class="cf-modal hidden">
+            <div class="cf-transfer-card" style="width: 100%; max-width: 400px; margin: auto; position: relative;">
+
+                <span id="closeProfileModal" style="position: absolute; right: 25px; top: 25px; font-size: 28px; color: #858e9a; cursor: pointer;">&times;</span>
+
+                <div class="transfer-heading">
+                    <h2 id="modalUserName">User</h2>
+                    <p>Security & Profile Settings</p>
+                </div>
+
+                <!-- SET PIN OPTION -->
+                <div class="security-card" style="margin-top: 25px; cursor: pointer; background: #10151a; border-color: #242d36;" id="setPinBtn">
+                    <div class="security-icon" style="background: #172b40; color: #63a8ff;">🔑</div>
+                    <div>
+                        <h3 style="color: #e5e9ee;">Set 4-Digit PIN</h3>
+                        <p>For fast, secure low-risk transfers</p>
+                    </div>
+                </div>
+
+                <!-- RESET PIN OPTION -->
+                <div class="security-card" style="margin-top: 15px; cursor: pointer; background: #10151a; border-color: #242d36;" id="resetPinBtn">
+                    <div class="security-icon" style="background: #2b1f1f; color: #ff7474;">🔄</div>
+                    <div>
+                        <h3 style="color: #e5e9ee;">Reset PIN</h3>
+                        <p>Update your existing transaction PIN</p>
+                    </div>
+                </div>
+
+                <!-- NEW LOGOUT BUTTON -->
+                <button id="modalLogoutBtn" class="cf-send-button" style="margin-top: 30px; background: #2a1616; color: #ff7474; border: 1px solid #4a2626;">Logout Securely</button>
+            </div>
+        </div>
     </main>
 
     <!-- BOTTOM NAVIGATION -->

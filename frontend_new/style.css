@@ -3049,3 +3049,27 @@ body {
 
     color: #6fe19a;
 }
+/* ========================================
+   PROFILE & PIN MODAL UI
+======================================== */
+.cf-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(8, 11, 14, 0.85); /* Dark transparent overlay */
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.cf-modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}

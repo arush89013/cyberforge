@@ -108,12 +108,42 @@ async function initDashboardPage() {
 
     // Set Name and Avatar
     document.getElementById("welcomeName").innerText = activeUserName;
+    document.getElementById("navProfileName").innerText = activeUserName;
     document.getElementById("userAvatar").innerText = activeUserName.charAt(0).toUpperCase();
 
-    // Logout
-    document.getElementById("logoutBtn").addEventListener("click", () => {
+    // ========================================
+    // PROFILE MODAL LOGIC
+    // ========================================
+    const profileModal = document.getElementById("profileModal");
+    const navProfile = document.getElementById("navProfile");
+    const userAvatar = document.getElementById("userAvatar");
+    const closeProfileModal = document.getElementById("closeProfileModal");
+
+    // Open/Close Modal Function
+    const toggleProfileModal = () => {
+        profileModal.classList.toggle("hidden");
+        document.getElementById("modalUserName").innerText = activeUserName;
+    };
+
+    // Click listeners to open modal (Bottom Nav & Top Avatar)
+    if (navProfile) navProfile.addEventListener("click", toggleProfileModal);
+    if (userAvatar) userAvatar.addEventListener("click", toggleProfileModal);
+
+    // Click listener to close modal
+    if (closeProfileModal) closeProfileModal.addEventListener("click", toggleProfileModal);
+
+    // New Logout Button inside the modal
+    document.getElementById("modalLogoutBtn").addEventListener("click", () => {
         localStorage.clear();
         window.location.href = "index.html";
+    });
+
+    // Placeholders for the PIN logic we will build next
+    document.getElementById("setPinBtn").addEventListener("click", () => {
+        alert("Set PIN logic coming next!");
+    });
+    document.getElementById("resetPinBtn").addEventListener("click", () => {
+        alert("Reset PIN logic coming next!");
     });
 
     // Tab Navigation: Home vs Activity
