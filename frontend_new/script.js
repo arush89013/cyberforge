@@ -116,6 +116,32 @@ async function initDashboardPage() {
         window.location.href = "index.html";
     });
 
+    // Tab Navigation: Home vs Activity
+    const navHome = document.getElementById("navHome");
+    const navActivity = document.getElementById("navActivity");
+    const homeWelcome = document.getElementById("homeWelcome");
+    const homeActions = document.getElementById("homeActions");
+
+    if (navActivity && navHome) {
+        navActivity.addEventListener("click", () => {
+            // Forcefully hide elements
+            if (homeWelcome) homeWelcome.style.display = "none";
+            if (homeActions) homeActions.style.display = "none";
+
+            navHome.classList.remove("active");
+            navActivity.classList.add("active");
+        });
+
+        navHome.addEventListener("click", () => {
+            // Remove the 'none' style so your CSS file perfectly takes over again
+            if (homeWelcome) homeWelcome.style.display = "";
+            if (homeActions) homeActions.style.display = "";
+
+            navActivity.classList.remove("active");
+            navHome.classList.add("active");
+        });
+    }
+
     // Fetch history from FastAPI
     const response = await fetch(`${API_BASE}/transactions/recent/${activeUserId}`);
     const transactions = await response.json();
@@ -126,11 +152,11 @@ async function initDashboardPage() {
         return;
     }
 
-    // Render using Neeraj's exact CSS structure
+    // Render transactions
     transactions.forEach(tx => {
         const item = document.createElement("div");
         item.className = "transaction";
-        item.style = "border-bottom: 1px solid #252b32; padding: 15px 3px;"; // From his CSS
+        item.style = "border-bottom: 1px solid #252b32; padding: 15px 3px;";
         
         const initial = tx.recipient_account.charAt(0).toUpperCase();
         const dateStr = new Date(tx.timestamp).toLocaleDateString("en-IN");
