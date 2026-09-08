@@ -4,6 +4,9 @@ class UserCreate(BaseModel):
     username: str
     password: str
 
+class PinUpdate(BaseModel):
+    pin: str
+
 class TransactionCreate(BaseModel):
     user_id: int
     amount: float
@@ -11,7 +14,7 @@ class TransactionCreate(BaseModel):
     device_info: str
     device_info: Optional[str] = "unknown"
     location_ip: Optional[str] = "unknown"
-
+    pin: Optional[str] = None  # <-- Add this line!
 class HardwareVerify(BaseModel):
     transaction_id: int
     hardware_id: str

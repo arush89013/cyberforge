@@ -64,11 +64,32 @@ def initiate_transfer(tx: schemas.TransactionCreate, db: Session = Depends(get_d
     actual_risk_score = ai_result["risk_score"]
 
     # ----------------------------------------------------
-    # DECISION ENGINE
+    # DECISION ENGINE (WITH PIN LOGIC)
     # ----------------------------------------------------
     if actual_risk_score < 30:
+        # It's a safe transaction! But do they have a PIN set?
+        user = db.query(models.User).filter(models.User.id == tx.user_id).first()
+
+        if not user.transaction_pin:
+            return {"action": "REQUIRE_SETUP", "message": "Please set a PIN in your profile first."}
+
+        # If they haven't sent the PIN in the request yet, intercept it!
+        if not tx.pin:
+            return {
+                "transaction_id": None,
+                "risk_score": actual_risk_score,
+                "action": "REQUIRE_PIN",
+                "flags": ai_result["flags"]
+            }
+
+        # If they sent a PIN, check if it matches!
+        if tx.pin != user.transaction_pin:
+            return {"action": "INVALID_PIN", "message": "Incorrect PIN entered."}
+
+        # If the PIN matches, allow it!
         final_status = "Completed"
         action = "ALLOW"
+
     elif actual_risk_score < 75:
         final_status = "OTP_Awaiting"
         action = "REQUIRE_OTP"
@@ -115,6 +136,16 @@ def check_hardware_requests(user_id: int, db: Session = Depends(get_db)):
         "recipient": pending.recipient_account
     }
 
+
+@app.post("/api/users/{user_id}/pin")
+def update_transaction_pin(user_id: int, pin_data: schemas.PinUpdate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        return {"status": "error", "message": "User not found"}
+
+    user.transaction_pin = pin_data.pin
+    db.commit()
+    return {"status": "success", "message": "PIN securely updated!"}
 
 @app.post("/api/users/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):

@@ -138,13 +138,28 @@ async function initDashboardPage() {
         window.location.href = "index.html";
     });
 
-    // Placeholders for the PIN logic we will build next
-    document.getElementById("setPinBtn").addEventListener("click", () => {
-        alert("Set PIN logic coming next!");
-    });
-    document.getElementById("resetPinBtn").addEventListener("click", () => {
-        alert("Reset PIN logic coming next!");
-    });
+    // PIN Management Logic
+    const handlePinUpdate = async () => {
+        const newPin = prompt("Enter your new 4-digit transaction PIN:");
+        if (newPin && newPin.length === 4 && !isNaN(newPin)) {
+            try {
+                const res = await fetch(`${API_BASE}/users/${activeUserId}/pin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pin: newPin })
+                });
+                const data = await res.json();
+                alert(data.message);
+            } catch (err) {
+                alert("Failed to connect to server.");
+            }
+        } else if (newPin) {
+            alert("Invalid format. PIN must be exactly 4 numbers.");
+        }
+    };
+
+    document.getElementById("setPinBtn").addEventListener("click", handlePinUpdate);
+    document.getElementById("resetPinBtn").addEventListener("click", handlePinUpdate);
 
     // Tab Navigation: Home vs Activity
     const navHome = document.getElementById("navHome");
@@ -259,9 +274,49 @@ function initTransferPage() {
                         document.getElementById("transferHardwareCheck").innerText = "!";
                         document.getElementById("transferHardwareStatus").innerText = "OTP sent to phone.";
                         document.getElementById("transferStatusTitle").innerText = "📱 Verification Required";
-                    } 
+                    }
+                    else if (data.action === "REQUIRE_SETUP") {
+                        alert("Security Alert: " + data.message);
+                        window.location.href = "dashboard.html"; // Send them back to set a PIN
+                    }
+                    else if (data.action === "REQUIRE_PIN") {
+                        // 1. Pause the flow and ask for the PIN
+                        const enteredPin = prompt("Security Check: Enter your 4-digit Transaction PIN to approve this transfer.");
+
+                        if (!enteredPin) {
+                            alert("Transaction cancelled.");
+                            window.location.reload();
+                            return;
+                        }
+
+                        // 2. Resend the request, but this time WITH the PIN attached
+                        payload.pin = enteredPin;
+                        fetch(`${API_BASE}/transactions/transfer`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        }).then(res => res.json()).then(pinData => {
+
+                            if (pinData.action === "INVALID_PIN") {
+                                alert("Transaction Failed: " + pinData.message);
+                                window.location.reload();
+                            } else {
+                                // PIN was correct! Show success!
+                                document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
+                                document.getElementById("transferHardwareCheck").innerText = "✓";
+                                document.getElementById("transferHardwareStatus").innerText = "PIN Verified";
+                                document.getElementById("transferStatusTitle").innerText = "✓ Transaction approved";
+
+                                setTimeout(() => {
+                                    document.getElementById("transferSecurity").classList.add("hidden");
+                                    document.getElementById("transactionResult").classList.remove("hidden");
+                                    document.getElementById("resultMessage").innerText = `₹${amount} sent to ${recipient}.`;
+                                }, 1200);
+                            }
+                        });
+                    }
                     else {
-                        // Success!
+                        // Standard Success fallback (just in case)
                         document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
                         document.getElementById("transferHardwareCheck").innerText = "✓";
                         document.getElementById("transferHardwareStatus").innerText = "Hardware auth not required";
