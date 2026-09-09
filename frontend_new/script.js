@@ -55,7 +55,7 @@ function initAuthPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username: user, password: pass })
             });
-            authMessage.style.color = "#6fe19a"; // Neeraj's green
+            authMessage.style.color = "#6fe19a";
             authMessage.innerText = "Account created! Please Sign In.";
             setTimeout(() => tabLogin.click(), 1500);
         } catch (error) {
@@ -83,7 +83,7 @@ function initAuthPage() {
             if (data.status === "success") {
                 localStorage.setItem("cf_user_id", data.user_id);
                 localStorage.setItem("cf_username", data.username);
-                window.location.href = "dashboard.html"; // Jump to dashboard!
+                window.location.href = "dashboard.html";
             } else {
                 authMessage.style.color = "#ffc45c";
                 authMessage.innerText = "Invalid credentials.";
@@ -102,7 +102,7 @@ function initAuthPage() {
 // ========================================
 async function initDashboardPage() {
     if (!activeUserId) {
-        window.location.href = "index.html"; // Kick out if not logged in
+        window.location.href = "index.html";
         return;
     }
 
@@ -119,20 +119,15 @@ async function initDashboardPage() {
     const userAvatar = document.getElementById("userAvatar");
     const closeProfileModal = document.getElementById("closeProfileModal");
 
-    // Open/Close Modal Function
     const toggleProfileModal = () => {
         profileModal.classList.toggle("hidden");
         document.getElementById("modalUserName").innerText = activeUserName;
     };
 
-    // Click listeners to open modal (Bottom Nav & Top Avatar)
     if (navProfile) navProfile.addEventListener("click", toggleProfileModal);
     if (userAvatar) userAvatar.addEventListener("click", toggleProfileModal);
-
-    // Click listener to close modal
     if (closeProfileModal) closeProfileModal.addEventListener("click", toggleProfileModal);
 
-    // New Logout Button inside the modal
     document.getElementById("modalLogoutBtn").addEventListener("click", () => {
         localStorage.clear();
         window.location.href = "index.html";
@@ -169,19 +164,15 @@ async function initDashboardPage() {
 
     if (navActivity && navHome) {
         navActivity.addEventListener("click", () => {
-            // Forcefully hide elements
             if (homeWelcome) homeWelcome.style.display = "none";
             if (homeActions) homeActions.style.display = "none";
-
             navHome.classList.remove("active");
             navActivity.classList.add("active");
         });
 
         navHome.addEventListener("click", () => {
-            // Remove the 'none' style so your CSS file perfectly takes over again
             if (homeWelcome) homeWelcome.style.display = "";
             if (homeActions) homeActions.style.display = "";
-
             navActivity.classList.remove("active");
             navHome.classList.add("active");
         });
@@ -212,36 +203,84 @@ async function initDashboardPage() {
                 <h3 style="color: #f0f2f5; font-size:15px;">${tx.recipient_account}</h3>
                 <p style="color: #858e9a; font-size:12px; margin-top:4px;">${dateStr} • ${tx.status}</p>
             </div>
-            <strong style="color: #ff7474; margin-left:auto;">− ₹${tx.amount.toLocaleString("en-IN")}</strong>
+            <strong style="color: #ff7474; margin-left:auto;">- Rs.${tx.amount.toLocaleString("en-IN")}</strong>
         `;
         list.appendChild(item);
     });
 }
 
 // ========================================
-// 3. TRANSFER PAGE LOGIC
+// 3. TRANSFER PAGE LOGIC (with Typing Speed Biometrics)
 // ========================================
 function initTransferPage() {
     if (!activeUserId) window.location.href = "index.html";
 
+    // -----------------------------------------------
+    // TYPING SPEED TRACKER
+    // -----------------------------------------------
+    let firstKeystrokeTime = null;
+
+    const recipientInput = document.getElementById("recipient");
+    const amountInput = document.getElementById("amount");
+
+    const trackKeystroke = () => {
+        if (firstKeystrokeTime === null) {
+            firstKeystrokeTime = Date.now();
+        }
+    };
+
+    recipientInput.addEventListener("keydown", trackKeystroke);
+    amountInput.addEventListener("keydown", trackKeystroke);
+
+    // -----------------------------------------------
+    // FLAG LABEL HELPER
+    // -----------------------------------------------
+    const FLAG_LABELS = {
+        "new_location":           "New location detected",
+        "new_device":             "New device detected",
+        "bot_speed_detected":     "Bot-like speed detected",
+        "unusual_typing_pattern": "Unusual typing pattern",
+        "unusual_amount":         "Unusual transaction amount",
+        "unusual_hour":           "Transaction at unusual hour",
+    };
+
+    function renderFlags(flags) {
+        const container = document.getElementById("riskFlags");
+        if (!container) return;
+        container.innerHTML = "";
+        flags.forEach(flag => {
+            const label = FLAG_LABELS[flag] || flag;
+            const span = document.createElement("span");
+            span.innerText = label;
+            span.style.cssText = "background:#2a1a1a; color:#ff9a6c; font-size:11px; padding:4px 10px; border-radius:12px; border:1px solid #3d2020;";
+            container.appendChild(span);
+        });
+    }
+
+    // -----------------------------------------------
+    // SEND MONEY HANDLER
+    // -----------------------------------------------
     document.getElementById("sendMoneyButton").addEventListener("click", async () => {
         const recipient = document.getElementById("recipient").value;
         const amount = document.getElementById("amount").value;
 
         if (!recipient || !amount) return alert("Please fill all details.");
 
-        // 1. Show Neeraj's Security Animation Screen
+        // Calculate typing speed (ms from first keystroke to submit click)
+        const typingSpeedMs = firstKeystrokeTime ? (Date.now() - firstKeystrokeTime) : null;
+
+        // 1. Show Security Animation Screen
         document.getElementById("sendMoneyButton").disabled = true;
         document.querySelector(".cf-transfer-card").classList.add("hidden");
         document.getElementById("transferSecurity").classList.remove("hidden");
 
-        // 2. Call FastAPI Backend!
+        // 2. Build payload with real device info + typing speed (IP auto-detected server-side)
         const payload = {
-            user_id: activeUserId,
+            user_id: parseInt(activeUserId),
             amount: parseFloat(amount),
             recipient: recipient,
-            device_info: "Nothing Phone (2a) Plus",
-            location_ip: "127.0.0.1"
+            device_info: navigator.userAgent,
+            typing_speed_ms: typingSpeedMs,
         };
 
         try {
@@ -252,87 +291,120 @@ function initTransferPage() {
             });
             const data = await response.json();
 
-            // 3. Play Neeraj's Animations based on FastAPI response
+            // 3. Animate the 4-step security verification flow
+            // Step 1: Device verification (after 600ms)
             setTimeout(() => {
                 document.getElementById("transferDeviceCheck").className = "transfer-check-icon verified";
-                document.getElementById("transferDeviceCheck").innerText = "✓";
-                
+                document.getElementById("transferDeviceCheck").innerText = "\u2713";
+
+                // Step 2: Behavioral biometrics (after 1200ms)
                 setTimeout(() => {
-                    document.getElementById("transferRiskCheck").className = "transfer-check-icon verified";
-                    document.getElementById("transferRiskCheck").innerText = "✓";
-                    document.getElementById("riskScore").innerText = `Risk Score: ${data.risk_score} / 100`;
-
-                    if (data.action === "REQUIRE_HARDWARE_AUTH") {
-                        document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
-                        document.getElementById("transferHardwareCheck").innerText = "!";
-                        document.getElementById("transferHardwareStatus").innerText = "ESP32 hardware required!";
-                        document.getElementById("transferStatusTitle").innerText = "⚠ High-risk transaction";
-                        document.getElementById("riskScore").classList.add("high-risk");
-                    } 
-                    else if (data.action === "REQUIRE_OTP") {
-                        document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
-                        document.getElementById("transferHardwareCheck").innerText = "!";
-                        document.getElementById("transferHardwareStatus").innerText = "OTP sent to phone.";
-                        document.getElementById("transferStatusTitle").innerText = "📱 Verification Required";
+                    document.getElementById("transferBehaviorCheck").className = "transfer-check-icon verified";
+                    document.getElementById("transferBehaviorCheck").innerText = "\u2713";
+                    if (typingSpeedMs) {
+                        document.getElementById("transferBehaviorStatus").innerText = `Typing speed: ${(typingSpeedMs / 1000).toFixed(1)}s`;
                     }
-                    else if (data.action === "REQUIRE_SETUP") {
-                        alert("Security Alert: " + data.message);
-                        window.location.href = "dashboard.html"; // Send them back to set a PIN
-                    }
-                    else if (data.action === "REQUIRE_PIN") {
-                        // 1. Pause the flow and ask for the PIN
-                        const enteredPin = prompt("Security Check: Enter your 4-digit Transaction PIN to approve this transfer.");
 
-                        if (!enteredPin) {
-                            alert("Transaction cancelled.");
-                            window.location.reload();
-                            return;
+                    // Step 3: Risk assessment (after 1800ms)
+                    setTimeout(() => {
+                        document.getElementById("transferRiskCheck").className = "transfer-check-icon verified";
+                        document.getElementById("transferRiskCheck").innerText = "\u2713";
+                        document.getElementById("riskScore").innerText = `Risk Score: ${data.risk_score} / 100`;
+
+                        // Color the risk score
+                        if (data.risk_score >= 80) {
+                            document.getElementById("riskScore").classList.add("high-risk");
+                        } else if (data.risk_score >= 25) {
+                            document.getElementById("riskScore").style.color = "#ffc45c";
+                        } else {
+                            document.getElementById("riskScore").style.color = "#6fe19a";
                         }
 
-                        // 2. Resend the request, but this time WITH the PIN attached
-                        payload.pin = enteredPin;
-                        fetch(`${API_BASE}/transactions/transfer`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload)
-                        }).then(res => res.json()).then(pinData => {
+                        // Render flags
+                        renderFlags(data.flags || []);
 
-                            if (pinData.action === "INVALID_PIN") {
-                                alert("Transaction Failed: " + pinData.message);
-                                window.location.reload();
-                            } else {
-                                // PIN was correct! Show success!
-                                document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
-                                document.getElementById("transferHardwareCheck").innerText = "✓";
-                                document.getElementById("transferHardwareStatus").innerText = "PIN Verified";
-                                document.getElementById("transferStatusTitle").innerText = "✓ Transaction approved";
-
-                                setTimeout(() => {
-                                    document.getElementById("transferSecurity").classList.add("hidden");
-                                    document.getElementById("transactionResult").classList.remove("hidden");
-                                    document.getElementById("resultMessage").innerText = `₹${amount} sent to ${recipient}.`;
-                                }, 1200);
-                            }
-                        });
-                    }
-                    else {
-                        // Standard Success fallback (just in case)
-                        document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
-                        document.getElementById("transferHardwareCheck").innerText = "✓";
-                        document.getElementById("transferHardwareStatus").innerText = "Hardware auth not required";
-                        document.getElementById("transferStatusTitle").innerText = "✓ Transaction approved";
-                        
+                        // Step 4: Authentication decision (after 2400ms)
                         setTimeout(() => {
-                            document.getElementById("transferSecurity").classList.add("hidden");
-                            document.getElementById("transactionResult").classList.remove("hidden");
-                            document.getElementById("resultMessage").innerText = `₹${amount} sent to ${recipient}.`;
-                        }, 1200);
-                    }
-                }, 800);
-            }, 800);
-            
+                            handleAuthDecision(data, payload, amount, recipient);
+                        }, 600);
+
+                    }, 600);
+                }, 600);
+            }, 600);
+
         } catch (error) {
             alert("Backend disconnected.");
+            document.getElementById("sendMoneyButton").disabled = false;
         }
     });
+
+    // -----------------------------------------------
+    // HANDLE AUTH DECISION BASED ON AI RESPONSE
+    // -----------------------------------------------
+    function handleAuthDecision(data, payload, amount, recipient) {
+        if (data.action === "REQUIRE_HARDWARE_AUTH") {
+            document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
+            document.getElementById("transferHardwareCheck").innerText = "!";
+            document.getElementById("transferHardwareStatus").innerText = "ESP32 hardware required!";
+            document.getElementById("transferStatusTitle").innerText = "High-risk transaction";
+            document.getElementById("riskScore").classList.add("high-risk");
+        }
+        else if (data.action === "REQUIRE_OTP") {
+            document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
+            document.getElementById("transferHardwareCheck").innerText = "!";
+            document.getElementById("transferHardwareStatus").innerText = "OTP sent to phone.";
+            document.getElementById("transferStatusTitle").innerText = "Verification Required";
+        }
+        else if (data.action === "REQUIRE_SETUP") {
+            alert("Security Alert: " + data.message);
+            window.location.href = "dashboard.html";
+        }
+        else if (data.action === "REQUIRE_PIN") {
+            const enteredPin = prompt("Security Check: Enter your 4-digit Transaction PIN to approve this transfer.");
+
+            if (!enteredPin) {
+                alert("Transaction cancelled.");
+                window.location.reload();
+                return;
+            }
+
+            // Resend with PIN attached
+            payload.pin = enteredPin;
+            fetch(`${API_BASE}/transactions/transfer`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(pinData => {
+                if (pinData.action === "INVALID_PIN") {
+                    alert("Transaction Failed: " + pinData.message);
+                    window.location.reload();
+                } else {
+                    // PIN correct — show success!
+                    document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
+                    document.getElementById("transferHardwareCheck").innerText = "\u2713";
+                    document.getElementById("transferHardwareStatus").innerText = "PIN Verified";
+                    document.getElementById("transferStatusTitle").innerText = "Transaction approved";
+
+                    setTimeout(() => {
+                        document.getElementById("transferSecurity").classList.add("hidden");
+                        document.getElementById("transactionResult").classList.remove("hidden");
+                        document.getElementById("resultMessage").innerText = `Rs.${amount} sent to ${recipient}.`;
+                    }, 1200);
+                }
+            });
+        }
+        else {
+            // Standard success (ALLOW)
+            document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
+            document.getElementById("transferHardwareCheck").innerText = "\u2713";
+            document.getElementById("transferHardwareStatus").innerText = "Authentication not required";
+            document.getElementById("transferStatusTitle").innerText = "Transaction approved";
+
+            setTimeout(() => {
+                document.getElementById("transferSecurity").classList.add("hidden");
+                document.getElementById("transactionResult").classList.remove("hidden");
+                document.getElementById("resultMessage").innerText = `Rs.${amount} sent to ${recipient}.`;
+            }, 1200);
+        }
+    }
 }

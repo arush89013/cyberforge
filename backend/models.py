@@ -21,6 +21,8 @@ class Transaction(Base):
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     device_info = Column(String(255), default="unknown")
     location_ip = Column(String(50), default="unknown")
+    typing_speed_ms = Column(Float, nullable=True)
+    risk_score = Column(Float, nullable=True)
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)

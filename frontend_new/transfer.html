@@ -69,18 +69,23 @@
                 <div class="transfer-security-checks">
                     <div class="transfer-check">
                         <span id="transferDeviceCheck" class="transfer-check-icon checking">◉</span>
-                        <div><strong>Transaction analysis</strong><small>Checking payment behavior</small></div>
+                        <div><strong>Device verification</strong><small>Checking device fingerprint</small></div>
+                    </div>
+                    <div class="transfer-check">
+                        <span id="transferBehaviorCheck" class="transfer-check-icon checking">◉</span>
+                        <div><strong>Behavioral biometrics</strong><small id="transferBehaviorStatus">Analyzing typing patterns</small></div>
                     </div>
                     <div class="transfer-check">
                         <span id="transferRiskCheck" class="transfer-check-icon checking">◉</span>
-                        <div><strong>Risk assessment</strong><small>Calculating transaction risk</small></div>
+                        <div><strong>Risk assessment</strong><small>Calculating multi-factor risk</small></div>
                     </div>
                     <div class="transfer-check">
                         <span id="transferHardwareCheck" class="transfer-check-icon pending">○</span>
-                        <div><strong>Hardware authentication</strong><small id="transferHardwareStatus">Waiting for risk decision</small></div>
+                        <div><strong>Authentication decision</strong><small id="transferHardwareStatus">Waiting for risk decision</small></div>
                     </div>
                 </div>
                 <div id="riskScore" class="cf-risk-score">Risk Score: Analyzing...</div>
+                <div id="riskFlags" style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px;"></div>
             </div>
         </section>
 
