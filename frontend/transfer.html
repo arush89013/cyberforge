@@ -89,9 +89,42 @@
             </div>
         </section>
 
+        <!-- OTP VERIFICATION MODAL -->
+        <section id="otpModal" class="cf-transfer-security hidden">
+            <div class="transfer-security-center">
+                <div class="transfer-security-ring">
+                    <div class="transfer-security-core" style="font-size: 32px;">&#x2709;</div>
+                </div>
+                <h2>Enter OTP</h2>
+                <p id="otpEmailInfo" style="color:#858e9a; margin-bottom:20px;">OTP sent to your registered email</p>
+
+                <div style="margin: 20px auto; max-width: 260px;">
+                    <input type="text" id="otpInput" maxlength="6" placeholder="Enter 6-digit OTP"
+                        style="width:100%; padding:14px 18px; font-size:22px; text-align:center; letter-spacing:8px;
+                               background:#10151a; border:2px solid #303943; border-radius:12px; color:#f0f2f5;
+                               outline:none; font-family:monospace;"
+                        onfocus="this.style.borderColor='#4c9df5'" onblur="this.style.borderColor='#303943'">
+                </div>
+
+                <p id="otpError" style="color:#ff7474; font-size:13px; min-height:20px;"></p>
+
+                <button id="verifyOtpBtn" style="width:100%; max-width:260px; padding:14px; margin-top:10px;
+                    background:linear-gradient(135deg,#4c9df5,#2879e8); color:white; border:none;
+                    border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;">
+                    Verify OTP
+                </button>
+
+                <p id="resendOtpArea" style="margin-top:18px; color:#858e9a; font-size:13px;">
+                    Didn't receive it?
+                    <span id="resendOtpLink" style="color:#4c9df5; cursor:pointer; display:none;">Resend OTP</span>
+                    <span id="resendTimer" style="color:#6fe19a;">Resend in 30s</span>
+                </p>
+            </div>
+        </section>
+
         <!-- TRANSACTION RESULT -->
         <section id="transactionResult" class="cf-transaction-result hidden">
-            <div class="cf-result-icon">✓</div>
+            <div class="cf-result-icon">&#x2713;</div>
             <h2 id="resultTitle">Transaction Complete</h2>
             <p id="resultMessage">Your payment has been completed.</p>
             <button onclick="window.location.href='dashboard.html'" class="cf-done-button">Back to Home</button>

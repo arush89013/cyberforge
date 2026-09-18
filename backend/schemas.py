@@ -11,6 +11,10 @@ class PinUpdate(BaseModel):
     pin: str
 
 
+class EmailUpdate(BaseModel):
+    email: str
+
+
 class TransactionCreate(BaseModel):
     user_id: int
     amount: float
@@ -24,3 +28,8 @@ class HardwareVerify(BaseModel):
     transaction_id: int
     hardware_id: str
     status: str
+
+
+class OTPVerify(BaseModel):
+    transaction_id: int
+    otp: str

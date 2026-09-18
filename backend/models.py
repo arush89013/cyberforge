@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from database import Base
 from datetime import datetime, timezone
 
@@ -8,7 +8,18 @@ class User(Base):
     username = Column(String(50), unique=True, index=True)
     password_hash = Column(String(255))
     transaction_pin = Column(String(255), nullable=True)
+    email_address = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class OTPRecord(Base):
+    __tablename__ = "otp_records"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
+    otp_code = Column(String(6))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    is_used = Column(Boolean, default=False)
 
 
 class Transaction(Base):

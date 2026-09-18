@@ -119,9 +119,32 @@ async function initDashboardPage() {
     const userAvatar = document.getElementById("userAvatar");
     const closeProfileModal = document.getElementById("closeProfileModal");
 
+    // Fetch user profile to show email status
+    const loadProfileStatus = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/users/${activeUserId}/profile`);
+            const profile = await res.json();
+            const emailStatus = document.getElementById("emailStatus");
+            if (emailStatus) {
+                if (profile.has_email) {
+                    emailStatus.innerText = "Registered: " + profile.masked_email;
+                    emailStatus.style.color = "#6fe19a";
+                } else {
+                    emailStatus.innerText = "Required for OTP verification";
+                    emailStatus.style.color = "#858e9a";
+                }
+            }
+        } catch (err) {
+            // Silently fail — profile status is non-critical
+        }
+    };
+
     const toggleProfileModal = () => {
         profileModal.classList.toggle("hidden");
         document.getElementById("modalUserName").innerText = activeUserName;
+        if (!profileModal.classList.contains("hidden")) {
+            loadProfileStatus();
+        }
     };
 
     if (navProfile) navProfile.addEventListener("click", toggleProfileModal);
@@ -155,6 +178,39 @@ async function initDashboardPage() {
 
     document.getElementById("setPinBtn").addEventListener("click", handlePinUpdate);
     document.getElementById("resetPinBtn").addEventListener("click", handlePinUpdate);
+
+    // ========================================
+    // EMAIL REGISTRATION LOGIC
+    // ========================================
+    document.getElementById("registerEmailBtn").addEventListener("click", async () => {
+        const email = prompt("Enter your email address:");
+        if (!email) return;
+
+        const clean = email.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(clean)) {
+            alert("Invalid format. Please enter a valid email address.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${activeUserId}/email`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: clean })
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                alert(data.message);
+                loadProfileStatus(); // Refresh the status display
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (err) {
+            alert("Failed to connect to server.");
+        }
+    });
 
     // Tab Navigation: Home vs Activity
     const navHome = document.getElementById("navHome");
@@ -210,7 +266,7 @@ async function initDashboardPage() {
 }
 
 // ========================================
-// 3. TRANSFER PAGE LOGIC (with Typing Speed Biometrics)
+// 3. TRANSFER PAGE LOGIC (with Typing Speed + OTP)
 // ========================================
 function initTransferPage() {
     if (!activeUserId) window.location.href = "index.html";
@@ -258,6 +314,120 @@ function initTransferPage() {
     }
 
     // -----------------------------------------------
+    // OTP RESEND COUNTDOWN TIMER
+    // -----------------------------------------------
+    let resendInterval = null;
+
+    function startResendTimer() {
+        let seconds = 30;
+        const timerEl = document.getElementById("resendTimer");
+        const linkEl = document.getElementById("resendOtpLink");
+        if (timerEl) timerEl.style.display = "inline";
+        if (linkEl) linkEl.style.display = "none";
+
+        if (resendInterval) clearInterval(resendInterval);
+
+        resendInterval = setInterval(() => {
+            seconds--;
+            if (timerEl) timerEl.innerText = `Resend in ${seconds}s`;
+            if (seconds <= 0) {
+                clearInterval(resendInterval);
+                if (timerEl) timerEl.style.display = "none";
+                if (linkEl) linkEl.style.display = "inline";
+            }
+        }, 1000);
+    }
+
+    // -----------------------------------------------
+    // SHOW OTP MODAL
+    // -----------------------------------------------
+    function showOtpModal(transactionId, maskedEmail, amount, recipient) {
+        document.getElementById("transferSecurity").classList.add("hidden");
+        document.getElementById("otpModal").classList.remove("hidden");
+
+        if (maskedEmail) {
+            document.getElementById("otpEmailInfo").innerText = `OTP sent to ${maskedEmail}`;
+        }
+
+        document.getElementById("otpInput").value = "";
+        document.getElementById("otpError").innerText = "";
+
+        startResendTimer();
+
+        // Verify OTP button
+        const verifyBtn = document.getElementById("verifyOtpBtn");
+        // Remove old listeners by cloning
+        const newVerifyBtn = verifyBtn.cloneNode(true);
+        verifyBtn.parentNode.replaceChild(newVerifyBtn, verifyBtn);
+
+        newVerifyBtn.addEventListener("click", async () => {
+            const otp = document.getElementById("otpInput").value.trim();
+
+            if (!otp || otp.length !== 6 || isNaN(otp)) {
+                document.getElementById("otpError").innerText = "Please enter a valid 6-digit OTP.";
+                return;
+            }
+
+            newVerifyBtn.innerText = "Verifying...";
+            newVerifyBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/otp/verify`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ transaction_id: transactionId, otp: otp })
+                });
+                const data = await res.json();
+
+                if (data.status === "success") {
+                    // OTP verified — show success!
+                    document.getElementById("otpModal").classList.add("hidden");
+                    document.getElementById("transactionResult").classList.remove("hidden");
+                    document.getElementById("resultMessage").innerText = `Rs.${amount} sent to ${recipient}.`;
+                } else {
+                    document.getElementById("otpError").innerText = data.message;
+                    newVerifyBtn.innerText = "Verify OTP";
+                    newVerifyBtn.disabled = false;
+                }
+            } catch (err) {
+                document.getElementById("otpError").innerText = "Server connection failed.";
+                newVerifyBtn.innerText = "Verify OTP";
+                newVerifyBtn.disabled = false;
+            }
+        });
+
+        // Resend OTP link
+        const resendLink = document.getElementById("resendOtpLink");
+        const newResendLink = resendLink.cloneNode(true);
+        resendLink.parentNode.replaceChild(newResendLink, resendLink);
+
+        newResendLink.addEventListener("click", async () => {
+            newResendLink.innerText = "Sending...";
+
+            try {
+                const res = await fetch(`${API_BASE}/otp/resend/${transactionId}`, { method: "POST" });
+                const data = await res.json();
+
+                if (data.status === "success") {
+                    document.getElementById("otpError").style.color = "#6fe19a";
+                    document.getElementById("otpError").innerText = "New OTP sent!";
+                    setTimeout(() => {
+                        document.getElementById("otpError").style.color = "#ff7474";
+                        document.getElementById("otpError").innerText = "";
+                    }, 3000);
+                } else {
+                    document.getElementById("otpError").innerText = data.message;
+                }
+            } catch (err) {
+                document.getElementById("otpError").innerText = "Failed to resend.";
+            }
+
+            newResendLink.innerText = "Resend OTP";
+            startResendTimer();
+        });
+    }
+
+    // -----------------------------------------------
     // SEND MONEY HANDLER
     // -----------------------------------------------
     document.getElementById("sendMoneyButton").addEventListener("click", async () => {
@@ -274,7 +444,7 @@ function initTransferPage() {
         document.querySelector(".cf-transfer-card").classList.add("hidden");
         document.getElementById("transferSecurity").classList.remove("hidden");
 
-        // 2. Build payload with real device info + typing speed (IP auto-detected server-side)
+        // 2. Build payload with real device info + typing speed
         const payload = {
             user_id: parseInt(activeUserId),
             amount: parseFloat(amount),
@@ -350,10 +520,20 @@ function initTransferPage() {
             document.getElementById("riskScore").classList.add("high-risk");
         }
         else if (data.action === "REQUIRE_OTP") {
+            // Show OTP check as pending, then open OTP modal
             document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
             document.getElementById("transferHardwareCheck").innerText = "!";
-            document.getElementById("transferHardwareStatus").innerText = "OTP sent to phone.";
-            document.getElementById("transferStatusTitle").innerText = "Verification Required";
+            document.getElementById("transferHardwareStatus").innerText = "OTP verification required";
+            document.getElementById("transferStatusTitle").innerText = "OTP Required";
+
+            // After a brief pause, transition to OTP modal
+            setTimeout(() => {
+                showOtpModal(data.transaction_id, data.masked_email, amount, recipient);
+            }, 1500);
+        }
+        else if (data.action === "REQUIRE_EMAIL_SETUP") {
+            alert("Security Alert: " + data.message);
+            window.location.href = "dashboard.html";
         }
         else if (data.action === "REQUIRE_SETUP") {
             alert("Security Alert: " + data.message);
