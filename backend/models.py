@@ -9,6 +9,7 @@ class User(Base):
     password_hash = Column(String(255))
     transaction_pin = Column(String(255), nullable=True)
     email_address = Column(String(100), nullable=True)
+    balance = Column(Float, default=100000.0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

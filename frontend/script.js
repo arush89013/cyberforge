@@ -2,6 +2,88 @@ const API_BASE = "http://127.0.0.1:8000/api";
 const activeUserId = localStorage.getItem("cf_user_id");
 const activeUserName = localStorage.getItem("cf_username");
 
+// Custom Modal Prompt to replace native prompt()
+function showCustomPrompt(title, message, inputType = "text", placeholder = "", isPassword = false) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "cf-modal";
+        overlay.style.zIndex = "9999";
+        overlay.style.display = "flex";
+        
+        const card = document.createElement("div");
+        card.className = "cf-transfer-card";
+        card.style.width = "100%";
+        card.style.maxWidth = "340px";
+        card.style.margin = "auto";
+        card.style.position = "relative";
+        card.style.padding = "30px 25px";
+        card.style.boxShadow = "0 20px 40px rgba(0,0,0,0.5)";
+
+        const closeBtn = document.createElement("span");
+        closeBtn.innerHTML = "&times;";
+        closeBtn.style.cssText = "position: absolute; right: 20px; top: 15px; font-size: 26px; color: #858e9a; cursor: pointer;";
+        
+        const titleEl = document.createElement("h3");
+        titleEl.innerText = title;
+        titleEl.style.color = "#e5e9ee";
+        titleEl.style.marginBottom = "10px";
+        titleEl.style.fontSize = "18px";
+
+        const msgEl = document.createElement("p");
+        msgEl.innerText = message;
+        msgEl.style.color = "#858e9a";
+        msgEl.style.fontSize = "13px";
+        msgEl.style.marginBottom = "25px";
+
+        const input = document.createElement("input");
+        input.type = isPassword ? "password" : inputType;
+        input.className = "cf-input";
+        input.placeholder = placeholder;
+        input.style.width = "100%";
+        input.style.marginBottom = "25px";
+        input.style.boxSizing = "border-box";
+        input.style.textAlign = "center";
+        input.style.letterSpacing = isPassword ? "4px" : "1px";
+
+        const submitBtn = document.createElement("button");
+        submitBtn.className = "cf-send-button";
+        submitBtn.innerText = "Confirm";
+
+        card.appendChild(closeBtn);
+        card.appendChild(titleEl);
+        card.appendChild(msgEl);
+        card.appendChild(input);
+        card.appendChild(submitBtn);
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        input.focus();
+
+        const cleanup = () => {
+            document.body.removeChild(overlay);
+        };
+
+        submitBtn.addEventListener("click", () => {
+            const val = input.value;
+            cleanup();
+            resolve(val);
+        });
+
+        input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                const val = input.value;
+                cleanup();
+                resolve(val);
+            }
+        });
+
+        closeBtn.addEventListener("click", () => {
+            cleanup();
+            resolve(null);
+        });
+    });
+}
+
 // --- ROUTER: Run specific logic based on the page ---
 if (document.getElementById("loginForm")) initAuthPage();
 if (document.getElementById("transactionList")) initDashboardPage();
@@ -119,11 +201,18 @@ async function initDashboardPage() {
     const userAvatar = document.getElementById("userAvatar");
     const closeProfileModal = document.getElementById("closeProfileModal");
 
-    // Fetch user profile to show email status
+    // Fetch user profile to show email status and balance
     const loadProfileStatus = async () => {
         try {
             const res = await fetch(`${API_BASE}/users/${activeUserId}/profile`);
             const profile = await res.json();
+            
+            const totalBalance = document.getElementById("totalBalance");
+            if (totalBalance && profile.balance !== undefined) {
+                // Format balance with Indian Rupee formatting
+                totalBalance.innerText = "₹" + profile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+
             const emailStatus = document.getElementById("emailStatus");
             if (emailStatus) {
                 if (profile.has_email) {
@@ -138,6 +227,9 @@ async function initDashboardPage() {
             // Silently fail — profile status is non-critical
         }
     };
+    
+    // Call it immediately on dashboard load to populate balance
+    loadProfileStatus();
 
     const toggleProfileModal = () => {
         profileModal.classList.toggle("hidden");
@@ -158,7 +250,13 @@ async function initDashboardPage() {
 
     // PIN Management Logic
     const handlePinUpdate = async () => {
-        const newPin = prompt("Enter your new 4-digit transaction PIN:");
+        const newPin = await showCustomPrompt(
+            "Transaction PIN", 
+            "Enter your new 4-digit transaction PIN:", 
+            "number", 
+            "****", 
+            true
+        );
         if (newPin && newPin.length === 4 && !isNaN(newPin)) {
             try {
                 const res = await fetch(`${API_BASE}/users/${activeUserId}/pin`, {
@@ -183,7 +281,12 @@ async function initDashboardPage() {
     // EMAIL REGISTRATION LOGIC
     // ========================================
     document.getElementById("registerEmailBtn").addEventListener("click", async () => {
-        const email = prompt("Enter your email address:");
+        const email = await showCustomPrompt(
+            "Register Email", 
+            "Enter your email address:", 
+            "email", 
+            "user@domain.com"
+        );
         if (!email) return;
 
         const clean = email.trim();
@@ -511,8 +614,13 @@ function initTransferPage() {
     // -----------------------------------------------
     // HANDLE AUTH DECISION BASED ON AI RESPONSE
     // -----------------------------------------------
-    function handleAuthDecision(data, payload, amount, recipient) {
-        if (data.action === "REQUIRE_HARDWARE_AUTH") {
+    async function handleAuthDecision(data, payload, amount, recipient) {
+        if (data.action === "INSUFFICIENT_FUNDS") {
+            alert("Transaction Failed: " + data.message);
+            window.location.reload();
+            return;
+        }
+        else if (data.action === "REQUIRE_HARDWARE_AUTH") {
             document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
             document.getElementById("transferHardwareCheck").innerText = "!";
             document.getElementById("transferHardwareStatus").innerText = "ESP32 hardware required!";
@@ -540,7 +648,13 @@ function initTransferPage() {
             window.location.href = "dashboard.html";
         }
         else if (data.action === "REQUIRE_PIN") {
-            const enteredPin = prompt("Security Check: Enter your 4-digit Transaction PIN to approve this transfer.");
+            const enteredPin = await showCustomPrompt(
+                "Security Check", 
+                "Enter your 4-digit Transaction PIN to approve this transfer:", 
+                "number", 
+                "****", 
+                true
+            );
 
             if (!enteredPin) {
                 alert("Transaction cancelled.");

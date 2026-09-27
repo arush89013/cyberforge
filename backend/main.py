@@ -82,6 +82,13 @@ def compute_user_baselines(db: Session, user_id: int) -> dict:
 # ============================================================
 @app.post("/api/transactions/transfer")
 def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == tx.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.balance < tx.amount:
+        return {"action": "INSUFFICIENT_FUNDS", "message": "Insufficient balance for this transaction."}
+
     client_ip = request.client.host if request.client else "unknown"
 
     completed_statuses = ["Completed", "OTP_Awaiting", "ESP32_Awaiting"]
@@ -134,6 +141,8 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
         if tx.pin != user.transaction_pin:
             return {"action": "INVALID_PIN", "message": "Incorrect PIN entered."}
 
+        # Deduct balance for low-risk PIN-approved transaction
+        user.balance -= tx.amount
         final_status = "Completed"
         action = "ALLOW"
 
@@ -226,7 +235,12 @@ def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
 
     tx = db.query(models.Transaction).filter(models.Transaction.id == data.transaction_id).first()
     if tx:
-        tx.status = "Completed"
+        user = db.query(models.User).filter(models.User.id == tx.user_id).first()
+        if user and user.balance >= tx.amount:
+            user.balance -= tx.amount
+            tx.status = "Completed"
+        else:
+            return {"status": "error", "message": "Insufficient balance."}
 
     db.commit()
 
@@ -307,7 +321,16 @@ def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    tx.status = "Completed" if verification.status == "APPROVED" else "Blocked"
+    if verification.status == "APPROVED":
+        user = db.query(models.User).filter(models.User.id == tx.user_id).first()
+        if user and user.balance >= tx.amount:
+            user.balance -= tx.amount
+            tx.status = "Completed"
+        else:
+            tx.status = "Blocked"
+    else:
+        tx.status = "Blocked"
+        
     db.commit()
     return {"message": f"Transaction {tx.id} updated to {tx.status}"}
 
@@ -371,6 +394,7 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db)):
     return {
         "user_id": user.id,
         "username": user.username,
+        "balance": user.balance,
         "has_pin": bool(user.transaction_pin),
         "has_email": bool(user.email_address),
         "masked_email": mask_email(user.email_address) if user.email_address else None,
