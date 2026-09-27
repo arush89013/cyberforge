@@ -9,6 +9,7 @@ import re
 
 from ai_engine.predictor import evaluate_risk
 from otp_service import generate_otp, send_otp_email
+from auth import hash_password, verify_password
 
 # Automatically create tables in MySQL
 Base.metadata.create_all(bind=engine)
@@ -316,7 +317,18 @@ def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(
 # ============================================================
 @app.post("/api/users/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    new_user = models.User(username=user.username, password_hash=user.password)
+    # Check if username already taken
+    existing = db.query(models.User).filter(models.User.username == user.username).first()
+    if existing:
+        return {"status": "error", "message": "Username already exists."}
+
+    # Hash password with bcrypt (salt + 2^12 rounds) before storing
+    hashed_pw = hash_password(user.password)
+
+    new_user = models.User(
+        username=user.username,
+        password_hash=hashed_pw     # Never store plaintext passwords
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -368,8 +380,27 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db)):
 @app.post("/api/users/login")
 def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if not db_user or db_user.password_hash != user.password:
+
+    if not db_user:
         return {"status": "error", "message": "Invalid username or password"}
+
+    stored = db_user.password_hash
+
+    # Check if password is already a bcrypt hash (bcrypt hashes start with $2b$)
+    if stored.startswith("$2b$") or stored.startswith("$2a$"):
+        # Proper bcrypt verification
+        password_valid = verify_password(user.password, stored)
+    else:
+        # Legacy plaintext fallback for old accounts created before bcrypt upgrade.
+        # On successful legacy login, auto-upgrade the hash to bcrypt.
+        password_valid = (user.password == stored)
+        if password_valid:
+            db_user.password_hash = hash_password(user.password)
+            db.commit()
+
+    if not password_valid:
+        return {"status": "error", "message": "Invalid username or password"}
+
     return {"status": "success", "user_id": db_user.id, "username": db_user.username}
 
 
