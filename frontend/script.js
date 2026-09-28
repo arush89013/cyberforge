@@ -393,6 +393,15 @@ function initTransferPage() {
             .catch(() => {});
     }
 
+    let currentPendingTransactionId = null;
+
+    // Send beacon to cancel transaction if user navigates away (e.g. hits back button)
+    window.addEventListener("beforeunload", () => {
+        if (currentPendingTransactionId) {
+            navigator.sendBeacon(`${API_BASE}/transactions/cancel/${currentPendingTransactionId}`);
+        }
+    });
+
     // -----------------------------------------------
     // TYPING SPEED TRACKER
     // -----------------------------------------------
@@ -522,6 +531,7 @@ function initTransferPage() {
                 const data = await res.json();
 
                 if (data.status === "success") {
+                    currentPendingTransactionId = null;
                     // OTP verified — show success!
                     document.getElementById("otpModal").classList.add("hidden");
                     document.getElementById("transactionResult").classList.remove("hidden");
@@ -660,6 +670,7 @@ function initTransferPage() {
             return;
         }
         else if (data.action === "REQUIRE_HARDWARE_AUTH") {
+            currentPendingTransactionId = data.transaction_id;
             document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
             document.getElementById("transferHardwareCheck").innerText = "!";
             document.getElementById("transferHardwareStatus").innerText = "Waiting for ESP32 button press...";
@@ -673,6 +684,7 @@ function initTransferPage() {
                     const statusData = await statusRes.json();
 
                     if (statusData.status === "Completed") {
+                        currentPendingTransactionId = null;
                         clearInterval(pollInterval);
                         document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
                         document.getElementById("transferHardwareCheck").innerText = "\u2713";
@@ -686,7 +698,8 @@ function initTransferPage() {
                             document.getElementById("resultTitle").style.color = "#6fe19a";
                             document.getElementById("resultMessage").innerText = `Rs.${amount} sent to ${recipient} (Hardware Verified).`;
                         }, 1000);
-                    } else if (statusData.status === "Blocked") {
+                    } else if (statusData.status === "Blocked" || statusData.status === "Cancelled") {
+                        currentPendingTransactionId = null;
                         clearInterval(pollInterval);
                         document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
                         document.getElementById("transferHardwareCheck").innerText = "\u2717";
@@ -707,6 +720,7 @@ function initTransferPage() {
             }, 1500);
         }
         else if (data.action === "REQUIRE_OTP") {
+            currentPendingTransactionId = data.transaction_id;
             // Show OTP check as pending, then open OTP modal
             document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
             document.getElementById("transferHardwareCheck").innerText = "!";

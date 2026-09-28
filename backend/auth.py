@@ -20,6 +20,25 @@ WHY RANDOM SALT?
 import hashlib
 import os
 import hmac
+from cryptography.fernet import Fernet
+
+# Static key for prototype demonstration
+EMAIL_ENCRYPTION_KEY = b'rY-sXbW0zY0vQk1rLq2VpKf5T9-8P3eHn6cWmUo4XjQ='
+fernet = Fernet(EMAIL_ENCRYPTION_KEY)
+
+def encrypt_email(email: str) -> str:
+    if not email:
+        return email
+    return fernet.encrypt(email.encode('utf-8')).decode('utf-8')
+
+def decrypt_email(encrypted_email: str) -> str:
+    if not encrypted_email:
+        return encrypted_email
+    try:
+        return fernet.decrypt(encrypted_email.encode('utf-8')).decode('utf-8')
+    except Exception:
+        # Fallback for old plaintext emails
+        return encrypted_email
 
 
 ITERATIONS = 260_000        # OWASP 2023 recommended for PBKDF2-SHA256

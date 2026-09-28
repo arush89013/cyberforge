@@ -27,7 +27,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
 from ai_engine.predictor import evaluate_risk
 from otp_service import generate_otp, send_otp_email
-from auth import hash_password, verify_password
+from auth import hash_password, verify_password, encrypt_email, decrypt_email
 
 # Automatically create tables in MySQL
 Base.metadata.create_all(bind=engine)
@@ -56,9 +56,11 @@ def get_db():
         db.close()
 
 
-def mask_email(email: str) -> str:
+def mask_email(email_str: str) -> str:
     """Masks an email address (e.g., test@example.com -> t**t@example.com)."""
+    if not email_str: return None
     try:
+        email = decrypt_email(email_str)
         local, domain = email.split('@')
         if len(local) > 2:
             masked_local = f"{local[0]}{'*' * (len(local) - 2)}{local[-1]}"
@@ -210,7 +212,7 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
                 "sub_scores": ai_result["sub_scores"],
             }
 
-        if tx.pin != user.transaction_pin:
+        if not verify_password(tx.pin, user.transaction_pin):
             return {"action": "INVALID_PIN", "message": "Incorrect PIN entered."}
 
         # Deduct balance for low-risk PIN-approved transaction
@@ -264,7 +266,7 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
         db.add(otp_record)
         db.commit()
 
-        email_result = send_otp_email(user.email_address, otp_code, tx.amount, tx.recipient)
+        email_result = send_otp_email(decrypt_email(user.email_address), otp_code, tx.amount, tx.recipient)
         otp_sent = email_result["success"]
         masked_email_str = mask_email(user.email_address)
 
@@ -360,7 +362,7 @@ def resend_otp(transaction_id: int, db: Session = Depends(get_db)):
     db.add(otp_record)
     db.commit()
 
-    email_result = send_otp_email(user.email_address, otp_code, tx.amount, tx.recipient_account)
+    email_result = send_otp_email(decrypt_email(user.email_address), otp_code, tx.amount, tx.recipient_account)
     masked_email_str = mask_email(user.email_address)
 
     return {
@@ -374,11 +376,20 @@ def resend_otp(transaction_id: int, db: Session = Depends(get_db)):
 # HARDWARE — ESP32 polling & verification
 # ============================================================
 @app.get("/api/hardware/pending_requests")
-def check_hardware_requests(user_id: int, db: Session = Depends(get_db)):
-    pending = db.query(models.Transaction).filter(
-        models.Transaction.user_id == user_id,
-        models.Transaction.status == "ESP32_Awaiting"
-    ).order_by(models.Transaction.timestamp.desc()).first()
+def check_hardware_requests(user_id: int = 0, db: Session = Depends(get_db)):
+    # 1. Look for a pending transaction for this user specifically
+    pending = None
+    if user_id and user_id > 0:
+        pending = db.query(models.Transaction).filter(
+            models.Transaction.user_id == user_id,
+            models.Transaction.status == "ESP32_Awaiting"
+        ).order_by(models.Transaction.timestamp.desc()).first()
+
+    # 2. If no pending transaction for specific user, check for any pending transaction across all users (Demo / Universal Token mode)
+    if not pending:
+        pending = db.query(models.Transaction).filter(
+            models.Transaction.status == "ESP32_Awaiting"
+        ).order_by(models.Transaction.timestamp.desc()).first()
 
     if not pending:
         return {"status": "NO_PENDING_REQUESTS"}
@@ -452,7 +463,7 @@ def update_transaction_pin(user_id: int, pin_data: schemas.PinUpdate, db: Sessio
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         return {"status": "error", "message": "User not found"}
-    user.transaction_pin = pin_data.pin
+    user.transaction_pin = hash_password(pin_data.pin)
     db.commit()
     return {"status": "success", "message": "PIN securely updated!"}
 
@@ -468,10 +479,10 @@ def update_email_address(user_id: int, email_data: schemas.EmailUpdate, db: Sess
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return {"status": "error", "message": "Invalid email address format."}
 
-    user.email_address = email
+    user.email_address = encrypt_email(email)
     db.commit()
 
-    return {"status": "success", "message": f"Email address {mask_email(email)} registered successfully!"}
+    return {"status": "success", "message": f"Email address {mask_email(user.email_address)} registered successfully!"}
 
 
 @app.get("/api/users/{user_id}/profile")
@@ -527,8 +538,18 @@ def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.get("/api/transactions/recent/{user_id}")
 def get_recent_transactions(user_id: int, db: Session = Depends(get_db)):
     return db.query(models.Transaction).filter(
-        models.Transaction.user_id == user_id
+        models.Transaction.user_id == user_id,
+        models.Transaction.status.notin_(["OTP_Awaiting", "ESP32_Awaiting"])
     ).order_by(models.Transaction.timestamp.desc()).limit(10).all()
+
+@app.post("/api/transactions/cancel/{transaction_id}")
+def cancel_transaction(transaction_id: int, db: Session = Depends(get_db)):
+    tx = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    if tx and tx.status in ["OTP_Awaiting", "ESP32_Awaiting"]:
+        tx.status = "Cancelled"
+        db.commit()
+        return {"status": "success"}
+    return {"status": "error", "message": "Cannot cancel this transaction"}
 
 
 @app.get("/api/transactions/status/{transaction_id}")

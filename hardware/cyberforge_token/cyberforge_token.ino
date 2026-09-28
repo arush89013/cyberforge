@@ -31,12 +31,14 @@
 // ==========================================
 // 1. CONFIGURATION — UPDATE THESE VALUES
 // ==========================================
-const char* WIFI_SSID     = "moto edge stylus_4197";        // 2.4 GHz WiFi SSID
-const char* WIFI_PASSWORD = "Neeraj1235";    // WiFi Password
+const char* WIFI_SSID     = "ARUSH-PC 0127";        // 2.4 GHz WiFi SSID
+const char* WIFI_PASSWORD = "86C2/89m";    // WiFi Password
 
 // Backend URL: Replace with your laptop's Wi-Fi IP address
 // Active Wi-Fi IP detected: http://10.130.152.251:8000
-const char* SERVER_BASE_URL = "http://10.130.152.251:8000";
+// Line 39 (Laptop Hotspot IP):
+const char* SERVER_BASE_URL = "http://192.168.137.1:8000";
+
 
 // The CyberForge User ID this physical token belongs to (e.g. 101 for Arush)
 const int ASSIGNED_USER_ID = 101;
