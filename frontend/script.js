@@ -1,4 +1,7 @@
-const API_BASE = "http://127.0.0.1:8000/api";
+const PROD_BACKEND_URL = "https://your-backend-app-name.onrender.com/api"; // You will update this after Render deployment
+const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
+    ? "http://127.0.0.1:8000/api" 
+    : PROD_BACKEND_URL;
 const activeUserId = localStorage.getItem("cf_user_id");
 const activeUserName = localStorage.getItem("cf_username");
 

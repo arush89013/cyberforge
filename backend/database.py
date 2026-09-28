@@ -1,8 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+import os
+
 # Change YOUR_PASSWORD to your actual MySQL password
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:#MySQL890@localhost:3306/sentinel_db"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:#MySQL890@localhost:3306/sentinel_db")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
