@@ -322,7 +322,7 @@ def evaluate_risk(transaction_data: dict) -> dict:
     tx_count_last_day  = transaction_data.get("tx_count_last_day", 0)
     is_known_recipient = transaction_data.get("is_known_recipient", False)
     recipient_tx_count = transaction_data.get("recipient_tx_count", 0)
-    balance            = transaction_data.get("balance", 100000.0)
+    balance            = transaction_data.get("balance", 1000000.0)
     travel_speed_kmh   = transaction_data.get("travel_speed_kmh", 0.0)
 
     # ---------------------------------------------------------------

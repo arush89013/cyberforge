@@ -77,8 +77,8 @@ try:
 
     if "travel_speed_kmh =" not in pred_code:
         pred_code = pred_code.replace(
-            'balance            = transaction_data.get("balance", 100000.0)',
-            'balance            = transaction_data.get("balance", 100000.0)\n    travel_speed_kmh   = transaction_data.get("travel_speed_kmh", 0.0)'
+            'balance            = transaction_data.get("balance", 1000000.0)',
+            'balance            = transaction_data.get("balance", 1000000.0)\n    travel_speed_kmh   = transaction_data.get("travel_speed_kmh", 0.0)'
         )
         pred_code = pred_code.replace(
             'if amount >= 65000:',

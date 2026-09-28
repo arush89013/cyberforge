@@ -137,9 +137,15 @@ function initAuthPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username: user, password: pass })
             });
-            authMessage.style.color = "#6fe19a";
-            authMessage.innerText = "Account created! Please Sign In.";
-            setTimeout(() => tabLogin.click(), 1500);
+            const data = await response.json();
+            if (data.status === "error") {
+                authMessage.style.color = "#ff7474";
+                authMessage.innerText = data.message || "Registration failed.";
+            } else {
+                authMessage.style.color = "#6fe19a";
+                authMessage.innerText = "Account created! Please Sign In.";
+                setTimeout(() => tabLogin.click(), 1500);
+            }
         } catch (error) {
             authMessage.style.color = "#ffc45c";
             authMessage.innerText = "Connection Error.";
@@ -373,6 +379,19 @@ async function initDashboardPage() {
 // ========================================
 function initTransferPage() {
     if (!activeUserId) window.location.href = "index.html";
+
+    // Load dynamic user balance on transfer page
+    const transferBalanceEl = document.getElementById("transferBalance");
+    if (transferBalanceEl && activeUserId) {
+        fetch(`${API_BASE}/users/${activeUserId}/profile`)
+            .then(res => res.json())
+            .then(profile => {
+                if (profile && profile.balance !== undefined) {
+                    transferBalanceEl.innerText = "₹" + profile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            })
+            .catch(() => {});
+    }
 
     // -----------------------------------------------
     // TYPING SPEED TRACKER
@@ -690,6 +709,9 @@ function initTransferPage() {
                 body: JSON.stringify(payload)
             }).then(res => res.json()).then(pinData => {
                 if (pinData.action === "INVALID_PIN") {
+                    alert("Transaction Failed: " + pinData.message);
+                    window.location.reload();
+                } else if (pinData.action === "INSUFFICIENT_FUNDS") {
                     alert("Transaction Failed: " + pinData.message);
                     window.location.reload();
                 } else {

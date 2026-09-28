@@ -151,11 +151,12 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
 
     travel_speed_kmh = 0.0
     last_tx = db.query(models.Transaction).filter(models.Transaction.user_id == tx.user_id, models.Transaction.status.in_(completed_statuses)).order_by(models.Transaction.timestamp.desc()).first()
-    if last_tx and last_tx.location_ip and last_tx.location_ip != client_ip:
+    if last_tx and last_tx.timestamp and last_tx.location_ip and last_tx.location_ip != client_ip:
         lat1, lon1 = get_lat_lon(last_tx.location_ip)
         lat2, lon2 = get_lat_lon(client_ip)
-        if lat1 and lon1 and lat2 and lon2:
-            time_diff = (datetime.now(timezone.utc) - last_tx.timestamp.replace(tzinfo=timezone.utc)).total_seconds() / 3600.0
+        if lat1 is not None and lon1 is not None and lat2 is not None and lon2 is not None:
+            tx_time = last_tx.timestamp if last_tx.timestamp.tzinfo else last_tx.timestamp.replace(tzinfo=timezone.utc)
+            time_diff = (datetime.now(timezone.utc) - tx_time).total_seconds() / 3600.0
             if time_diff > 0: travel_speed_kmh = haversine(lat1, lon1, lat2, lon2) / time_diff
 
     known_ip = db.query(models.Transaction).filter(
@@ -295,24 +296,28 @@ def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
         return {"status": "error", "message": "No OTP found. Please request a new one."}
 
     now = datetime.now(timezone.utc)
-    otp_age = now - otp_record.created_at.replace(tzinfo=timezone.utc)
+    created_at = otp_record.created_at if otp_record.created_at.tzinfo else otp_record.created_at.replace(tzinfo=timezone.utc)
+    otp_age = now - created_at
     if otp_age > timedelta(minutes=OTP_EXPIRY_MINUTES):
         return {"status": "expired", "message": "OTP has expired. Please request a new one."}
 
     if data.otp != otp_record.otp_code:
         return {"status": "invalid", "message": "Incorrect OTP. Please try again."}
 
-    otp_record.is_used = True
-
     tx = db.query(models.Transaction).filter(models.Transaction.id == data.transaction_id).first()
-    if tx:
-        user = db.query(models.User).filter(models.User.id == tx.user_id).first()
-        if user and user.balance >= tx.amount:
-            user.balance -= tx.amount
-            tx.status = "Completed"
-        else:
-            return {"status": "error", "message": "Insufficient balance."}
+    if not tx:
+        return {"status": "error", "message": "Transaction not found."}
 
+    if tx.status == "Completed":
+        return {"status": "error", "message": "Transaction already completed."}
+
+    user = db.query(models.User).filter(models.User.id == tx.user_id).first()
+    if not user or user.balance < tx.amount:
+        return {"status": "error", "message": "Insufficient balance."}
+
+    otp_record.is_used = True
+    user.balance -= tx.amount
+    tx.status = "Completed"
     db.commit()
 
     return {
@@ -392,6 +397,9 @@ def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
+    if tx.status == "Completed":
+        return {"message": f"Transaction {tx.id} is already Completed"}
+
     if verification.status == "APPROVED":
         user = db.query(models.User).filter(models.User.id == tx.user_id).first()
         if user and user.balance >= tx.amount:
@@ -421,12 +429,13 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     new_user = models.User(
         username=user.username,
-        password_hash=hashed_pw     # Never store plaintext passwords
+        password_hash=hashed_pw,
+        balance=1000000.0
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"message": f"User {new_user.id} created successfully!"}
+    return {"status": "success", "message": f"User {new_user.id} created successfully!"}
 
 
 @app.post("/api/users/{user_id}/pin")
@@ -483,7 +492,7 @@ def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     # Detect if the stored password is a PBKDF2 hash (format: "iterations$salt$hash")
     # or legacy plaintext. PBKDF2 hashes always have exactly 2 '$' delimiters.
-    parts = stored.split("$")
+    parts = stored.split("$") if stored else []
     is_hashed = (len(parts) == 3 and parts[0].isdigit())
 
     if is_hashed:
