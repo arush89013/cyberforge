@@ -395,13 +395,25 @@ function initTransferPage() {
     // FLAG LABEL HELPER
     // -----------------------------------------------
     const FLAG_LABELS = {
-        "new_location":           "New location detected",
-        "new_device":             "New device detected",
-        "bot_speed_detected":     "Bot-like speed detected",
-        "unusual_typing_pattern": "Unusual typing pattern",
-        "unusual_amount":         "Unusual transaction amount",
-        "unusual_hour":           "Transaction at unusual hour",
+        "new_location":                  "🌐 New location detected",
+        "new_device":                    "💻 New device detected",
+        "bot_speed_detected":            "🤖 Bot-like speed detected",
+        "automated_input_suspected":     "⚡ Automated input suspected",
+        "unusual_typing_pattern":        "⌨️ Unusual typing pattern",
+        "unusual_amount":                "💰 Unusual transaction amount",
+        "extreme_amount":                "🚨 Extreme transaction amount",
+        "unusual_hour":                  "🌙 Transaction at unusual hour",
+        "rapid_burst_transactions":      "⚡ Rapid burst transactions",
+        "elevated_transaction_frequency":"📊 Elevated transaction frequency",
+        "new_recipient":                 "👤 New recipient",
+        "account_drain_attempt":         "🚨 Account drain attempt",
+        "large_balance_proportion":      "💳 Large balance proportion",
+        "multi_factor_anomaly":          "⚠️ Multi-factor anomaly detected",
+        "impossible_travel_detected":    "✈️ Impossible travel speed detected",
     };
+
+    const CRITICAL_FLAGS = ["bot_speed_detected", "account_drain_attempt", "extreme_amount", "multi_factor_anomaly", "rapid_burst_transactions", "impossible_travel_detected"];
+    const WARNING_FLAGS = ["new_device", "new_location", "automated_input_suspected", "unusual_amount", "unusual_typing_pattern", "large_balance_proportion"];
 
     function renderFlags(flags) {
         const container = document.getElementById("riskFlags");
@@ -411,7 +423,15 @@ function initTransferPage() {
             const label = FLAG_LABELS[flag] || flag;
             const span = document.createElement("span");
             span.innerText = label;
-            span.style.cssText = "background:#2a1a1a; color:#ff9a6c; font-size:11px; padding:4px 10px; border-radius:12px; border:1px solid #3d2020;";
+            
+            let bgColor = "#1a2a1a"; let textColor = "#6fe19a"; let borderColor = "#2d4a2d";
+            if (CRITICAL_FLAGS.includes(flag)) {
+                bgColor = "#2a1a1a"; textColor = "#ff7474"; borderColor = "#4a2020";
+            } else if (WARNING_FLAGS.includes(flag)) {
+                bgColor = "#2a2a1a"; textColor = "#ffc45c"; borderColor = "#4a3d20";
+            }
+            
+            span.style.cssText = `background:${bgColor}; color:${textColor}; font-size:11px; padding:4px 10px; border-radius:12px; border:1px solid ${borderColor}; margin: 2px 3px; display: inline-block;`;
             container.appendChild(span);
         });
     }

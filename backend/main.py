@@ -6,6 +6,24 @@ import models
 import schemas
 from datetime import datetime, timezone, timedelta
 import re
+import math
+import requests
+
+def get_lat_lon(ip: str):
+    if ip in ('127.0.0.1', '::1', 'localhost', 'unknown'): return 28.6139, 77.2090
+    try:
+        r = requests.get(f'http://ip-api.com/json/{ip}', timeout=1.0)
+        if r.json().get('status') == 'success': return r.json()['lat'], r.json()['lon']
+    except: pass
+    return None, None
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat, dlon = lat2 - lat1, lon2 - lon1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    return R * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
+
 
 from ai_engine.predictor import evaluate_risk
 from otp_service import generate_otp, send_otp_email
@@ -54,7 +72,7 @@ def mask_email(email: str) -> str:
 # ============================================================
 # HELPER: Compute user behavioral baselines from history
 # ============================================================
-def compute_user_baselines(db: Session, user_id: int) -> dict:
+def compute_user_baselines(db: Session, user_id: int, recipient: str = None) -> dict:
     completed_statuses = ["Completed", "OTP_Awaiting", "ESP32_Awaiting"]
 
     past_transactions = db.query(models.Transaction).filter(
@@ -63,7 +81,14 @@ def compute_user_baselines(db: Session, user_id: int) -> dict:
     ).all()
 
     if not past_transactions:
-        return {"avg_amount": None, "avg_typing_speed": None}
+        return {
+            "avg_amount": None,
+            "avg_typing_speed": None,
+            "tx_count_last_hour": 0,
+            "tx_count_last_day": 0,
+            "is_known_recipient": False,
+            "recipient_tx_count": 0,
+        }
 
     amounts = [tx.amount for tx in past_transactions if tx.amount is not None]
     avg_amount = sum(amounts) / len(amounts) if amounts else None
@@ -71,9 +96,39 @@ def compute_user_baselines(db: Session, user_id: int) -> dict:
     typing_speeds = [tx.typing_speed_ms for tx in past_transactions if tx.typing_speed_ms is not None]
     avg_typing_speed = sum(typing_speeds) / len(typing_speeds) if typing_speeds else None
 
+    # Transaction velocity: count recent transactions
+    now = datetime.now(timezone.utc)
+    one_hour_ago = now - timedelta(hours=1)
+    one_day_ago = now - timedelta(hours=24)
+
+    tx_count_last_hour = 0
+    tx_count_last_day = 0
+    for tx in past_transactions:
+        tx_time = tx.timestamp
+        if tx_time and tx_time.tzinfo is None:
+            tx_time = tx_time.replace(tzinfo=timezone.utc)
+        if tx_time and tx_time >= one_hour_ago:
+            tx_count_last_hour += 1
+        if tx_time and tx_time >= one_day_ago:
+            tx_count_last_day += 1
+
+    # Recipient familiarity
+    is_known_recipient = False
+    recipient_tx_count = 0
+    if recipient:
+        recipient_lower = recipient.strip().lower()
+        for tx in past_transactions:
+            if tx.recipient_account and tx.recipient_account.strip().lower() == recipient_lower:
+                recipient_tx_count += 1
+        is_known_recipient = recipient_tx_count > 0
+
     return {
         "avg_amount": avg_amount,
         "avg_typing_speed": avg_typing_speed,
+        "tx_count_last_hour": tx_count_last_hour,
+        "tx_count_last_day": tx_count_last_day,
+        "is_known_recipient": is_known_recipient,
+        "recipient_tx_count": recipient_tx_count,
     }
 
 
@@ -89,9 +144,19 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
     if user.balance < tx.amount:
         return {"action": "INSUFFICIENT_FUNDS", "message": "Insufficient balance for this transaction."}
 
-    client_ip = request.client.host if request.client else "unknown"
+    forwarded = request.headers.get("X-Forwarded-For")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
 
     completed_statuses = ["Completed", "OTP_Awaiting", "ESP32_Awaiting"]
+
+    travel_speed_kmh = 0.0
+    last_tx = db.query(models.Transaction).filter(models.Transaction.user_id == tx.user_id, models.Transaction.status.in_(completed_statuses)).order_by(models.Transaction.timestamp.desc()).first()
+    if last_tx and last_tx.location_ip and last_tx.location_ip != client_ip:
+        lat1, lon1 = get_lat_lon(last_tx.location_ip)
+        lat2, lon2 = get_lat_lon(client_ip)
+        if lat1 and lon1 and lat2 and lon2:
+            time_diff = (datetime.now(timezone.utc) - last_tx.timestamp.replace(tzinfo=timezone.utc)).total_seconds() / 3600.0
+            if time_diff > 0: travel_speed_kmh = haversine(lat1, lon1, lat2, lon2) / time_diff
 
     known_ip = db.query(models.Transaction).filter(
         models.Transaction.user_id == tx.user_id,
@@ -105,17 +170,23 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
         models.Transaction.status.in_(completed_statuses)
     ).first() is not None
 
-    baselines = compute_user_baselines(db, tx.user_id)
+    baselines = compute_user_baselines(db, tx.user_id, tx.recipient)
     current_hour = datetime.now(timezone.utc).hour
 
     transaction_data = {
-        "amount":           tx.amount,
-        "is_known_ip":      known_ip,
-        "is_known_device":  known_device,
-        "typing_speed_ms":  tx.typing_speed_ms,
-        "avg_typing_speed": baselines["avg_typing_speed"],
-        "avg_amount":       baselines["avg_amount"],
-        "current_hour":     current_hour,
+        "amount":              tx.amount,
+        "is_known_ip":         known_ip,
+        "is_known_device":     known_device,
+        "typing_speed_ms":     tx.typing_speed_ms,
+        "avg_typing_speed":    baselines["avg_typing_speed"],
+        "avg_amount":          baselines["avg_amount"],
+        "current_hour":        current_hour,
+        "tx_count_last_hour":  baselines["tx_count_last_hour"],
+        "tx_count_last_day":   baselines["tx_count_last_day"],
+        "is_known_recipient":  baselines["is_known_recipient"],
+        "recipient_tx_count":  baselines["recipient_tx_count"],
+        "balance":             user.balance,
+        "travel_speed_kmh":    travel_speed_kmh,
     }
 
     ai_result = evaluate_risk(transaction_data)
@@ -410,13 +481,17 @@ def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     stored = db_user.password_hash
 
-    # Check if password is already a bcrypt hash (bcrypt hashes start with $2b$)
-    if stored.startswith("$2b$") or stored.startswith("$2a$"):
-        # Proper bcrypt verification
+    # Detect if the stored password is a PBKDF2 hash (format: "iterations$salt$hash")
+    # or legacy plaintext. PBKDF2 hashes always have exactly 2 '$' delimiters.
+    parts = stored.split("$")
+    is_hashed = (len(parts) == 3 and parts[0].isdigit())
+
+    if is_hashed:
+        # PBKDF2-HMAC-SHA256 verification
         password_valid = verify_password(user.password, stored)
     else:
-        # Legacy plaintext fallback for old accounts created before bcrypt upgrade.
-        # On successful legacy login, auto-upgrade the hash to bcrypt.
+        # Legacy plaintext fallback for old accounts created before hash upgrade.
+        # On successful legacy login, auto-upgrade the hash to PBKDF2.
         password_valid = (user.password == stored)
         if password_valid:
             db_user.password_hash = hash_password(user.password)
