@@ -311,6 +311,13 @@ async function initDashboardPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: clean })
             });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                alert("Server error (" + res.status + "): " + errText);
+                return;
+            }
+
             const data = await res.json();
 
             if (data.status === "success") {
@@ -320,7 +327,7 @@ async function initDashboardPage() {
                 alert("Error: " + data.message);
             }
         } catch (err) {
-            alert("Failed to connect to server.");
+            alert("Network error: " + err.message);
         }
     });
 

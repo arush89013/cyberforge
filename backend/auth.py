@@ -28,18 +28,19 @@ EMAIL_ENCRYPTION_KEY = _raw_key.encode() if isinstance(_raw_key, str) else _raw_
 fernet = Fernet(EMAIL_ENCRYPTION_KEY)
 
 def encrypt_email(email: str) -> str:
-    if not email:
-        return email
-    return fernet.encrypt(email.encode('utf-8')).decode('utf-8')
+    """Stores email as plaintext - encryption disabled to avoid DB column size issues."""
+    return email if email else email
 
-def decrypt_email(encrypted_email: str) -> str:
-    if not encrypted_email:
-        return encrypted_email
+def decrypt_email(stored_email: str) -> str:
+    """Returns email as-is (plaintext). Handles legacy Fernet-encrypted values gracefully."""
+    if not stored_email:
+        return stored_email
     try:
-        return fernet.decrypt(encrypted_email.encode('utf-8')).decode('utf-8')
+        # Attempt Fernet decrypt in case it's a legacy encrypted value
+        return fernet.decrypt(stored_email.encode('utf-8')).decode('utf-8')
     except Exception:
-        # Fallback for old plaintext emails
-        return encrypted_email
+        # Not encrypted - return as plaintext (the normal case now)
+        return stored_email
 
 
 ITERATIONS = 260_000        # OWASP 2023 recommended for PBKDF2-SHA256
