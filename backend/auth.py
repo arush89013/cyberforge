@@ -22,8 +22,9 @@ import os
 import hmac
 from cryptography.fernet import Fernet
 
-# Static key for prototype demonstration
-EMAIL_ENCRYPTION_KEY = b'rY-sXbW0zY0vQk1rLq2VpKf5T9-8P3eHn6cWmUo4XjQ='
+# Load encryption key from environment variable (set on Render), or use generated default
+_raw_key = os.getenv("EMAIL_ENCRYPTION_KEY", "WMmt8ottINOynRt7l5ndWZ9Jqcj6yNM8tTE6e3sKpGg=")
+EMAIL_ENCRYPTION_KEY = _raw_key.encode() if isinstance(_raw_key, str) else _raw_key
 fernet = Fernet(EMAIL_ENCRYPTION_KEY)
 
 def encrypt_email(email: str) -> str:
