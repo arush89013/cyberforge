@@ -378,10 +378,19 @@ def check_hardware_requests(user_id: int, db: Session = Depends(get_db)):
     pending = db.query(models.Transaction).filter(
         models.Transaction.user_id == user_id,
         models.Transaction.status == "ESP32_Awaiting"
-    ).first()
+    ).order_by(models.Transaction.timestamp.desc()).first()
 
     if not pending:
         return {"status": "NO_PENDING_REQUESTS"}
+
+    # Auto-expire pending requests older than 5 minutes
+    if pending.timestamp:
+        now = datetime.now(timezone.utc)
+        tx_time = pending.timestamp if pending.timestamp.tzinfo else pending.timestamp.replace(tzinfo=timezone.utc)
+        if (now - tx_time) > timedelta(minutes=5):
+            pending.status = "Blocked"
+            db.commit()
+            return {"status": "NO_PENDING_REQUESTS"}
 
     return {
         "status": "PENDING_REQUEST",
@@ -520,6 +529,14 @@ def get_recent_transactions(user_id: int, db: Session = Depends(get_db)):
     return db.query(models.Transaction).filter(
         models.Transaction.user_id == user_id
     ).order_by(models.Transaction.timestamp.desc()).limit(10).all()
+
+
+@app.get("/api/transactions/status/{transaction_id}")
+def get_transaction_status(transaction_id: int, db: Session = Depends(get_db)):
+    tx = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    if not tx:
+        return {"status": "NOT_FOUND"}
+    return {"status": tx.status, "transaction_id": tx.id}
 
 
 #                 cd backend

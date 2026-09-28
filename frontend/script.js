@@ -662,9 +662,49 @@ function initTransferPage() {
         else if (data.action === "REQUIRE_HARDWARE_AUTH") {
             document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
             document.getElementById("transferHardwareCheck").innerText = "!";
-            document.getElementById("transferHardwareStatus").innerText = "ESP32 hardware required!";
-            document.getElementById("transferStatusTitle").innerText = "High-risk transaction";
+            document.getElementById("transferHardwareStatus").innerText = "Waiting for ESP32 button press...";
+            document.getElementById("transferStatusTitle").innerText = "High-Risk: Hardware Token Required";
             document.getElementById("riskScore").classList.add("high-risk");
+
+            // Poll transaction status to detect physical ESP32 approval/rejection
+            const pollInterval = setInterval(async () => {
+                try {
+                    const statusRes = await fetch(`${API_BASE}/transactions/status/${data.transaction_id}`);
+                    const statusData = await statusRes.json();
+
+                    if (statusData.status === "Completed") {
+                        clearInterval(pollInterval);
+                        document.getElementById("transferHardwareCheck").className = "transfer-check-icon verified";
+                        document.getElementById("transferHardwareCheck").innerText = "\u2713";
+                        document.getElementById("transferHardwareStatus").innerText = "Approved via Hardware Token!";
+                        document.getElementById("transferStatusTitle").innerText = "Transaction Approved";
+
+                        setTimeout(() => {
+                            document.getElementById("transferSecurity").classList.add("hidden");
+                            document.getElementById("transactionResult").classList.remove("hidden");
+                            document.getElementById("resultTitle").innerText = "Transaction Complete";
+                            document.getElementById("resultTitle").style.color = "#6fe19a";
+                            document.getElementById("resultMessage").innerText = `Rs.${amount} sent to ${recipient} (Hardware Verified).`;
+                        }, 1000);
+                    } else if (statusData.status === "Blocked") {
+                        clearInterval(pollInterval);
+                        document.getElementById("transferHardwareCheck").className = "transfer-check-icon warning";
+                        document.getElementById("transferHardwareCheck").innerText = "\u2717";
+                        document.getElementById("transferHardwareStatus").innerText = "Rejected on Hardware Token";
+                        document.getElementById("transferStatusTitle").innerText = "Transaction Blocked";
+
+                        setTimeout(() => {
+                            document.getElementById("transferSecurity").classList.add("hidden");
+                            document.getElementById("transactionResult").classList.remove("hidden");
+                            document.getElementById("resultTitle").innerText = "Transaction Blocked";
+                            document.getElementById("resultTitle").style.color = "#ff7474";
+                            document.getElementById("resultMessage").innerText = "Physical verification failed or was rejected on the hardware token.";
+                        }, 1000);
+                    }
+                } catch (err) {
+                    // Silent retry
+                }
+            }, 1500);
         }
         else if (data.action === "REQUIRE_OTP") {
             // Show OTP check as pending, then open OTP modal
