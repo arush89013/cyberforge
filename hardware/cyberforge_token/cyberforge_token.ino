@@ -37,7 +37,7 @@ const char* WIFI_PASSWORD = "86C2/89m";    // WiFi Password
 // Backend URL: Replace with your laptop's Wi-Fi IP address
 // Active Wi-Fi IP detected: http://10.130.152.251:8000
 // Line 39 (Laptop Hotspot IP):
-const char* SERVER_BASE_URL = "http://192.168.137.1:8000";
+const char* SERVER_BASE_URL = "https://cyberforge-22d1.onrender.com";
 
 
 // The CyberForge User ID this physical token belongs to (e.g. 101 for Arush)
