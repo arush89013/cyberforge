@@ -1,4 +1,4 @@
-# CyberForge — Adaptive AI-Driven Banking Fraud Prevention & Hardware Sentinel 🛡️⚡
+# CyberForge — Adaptive AI-Driven Banking Fraud Prevention & Hardware Sentinel 
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
@@ -28,7 +28,7 @@
 
 ---
 
-## 🌟 Key Architecture & Features
+## Key Architecture & Features
 
 - 🧠 **Multi-Layered AI Risk Engine**: Evaluates 8 independent behavioral and context dimensions, boosted by an Isolation Forest ML model and Impossible Travel speed verification.
 - 🔐 **Zero-Friction Dynamic Step-Up MFA**: Automatically scales authentication demands based on risk scoring (Direct approval $\to$ 2FA Email OTP $\to$ Out-of-Band Physical ESP32 Hardware Approval $\to$ Hard Block).
@@ -40,7 +40,7 @@
 
 ---
 
-## 🎯 Multi-Tier Risk Engine (8 Dimensions)
+## Multi-Tier Risk Engine (8 Dimensions)
 
 The composite risk score ($0 - 100$) is computed across 8 weighted behavioral and environmental factors:
 
@@ -59,7 +59,7 @@ The composite risk score ($0 - 100$) is computed across 8 weighted behavioral an
 
 ---
 
-## 🚦 Adaptive Action Tiers
+##  Adaptive Action Tiers
 
 Based on the calculated composite risk score ($0 - 100$), the system dynamically triggers one of four security decisions:
 
@@ -77,7 +77,7 @@ Based on the calculated composite risk score ($0 - 100$), the system dynamically
 
 ---
 
-## 📟 ESP32 Hardware Security Token
+##  ESP32 Hardware Security Token
 
 For high-risk transactions ($66 - 84$), CyberForge escalates verification to a dedicated, physically isolated ESP32 hardware device:
 
@@ -96,7 +96,7 @@ OLED Display (SSD1306)          ESP32 Board (NodeMCU / WROOM)
 
 ---
 
-## 🏗️ System Architecture & Flow
+##  System Architecture & Flow
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +138,7 @@ sequenceDiagram
 
 ---
 
-## 📂 Project Directory Structure
+## Project Directory Structure
 
 ```plaintext
 cyberforge/
@@ -176,7 +176,7 @@ cyberforge/
 
 ---
 
-## 🚀 Prerequisites & Setup
+##  Prerequisites & Setup
 
 ### Prerequisites
 
@@ -274,7 +274,7 @@ Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 📡 API Endpoints Reference
+##  API Endpoints Reference
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -291,7 +291,7 @@ Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 🛡️ Security Features
+##  Security Features
 
 - **Fernet Symmetric Encryption**: PII (emails) encrypted at rest in the database.
 - **Salted Hashing**: Passwords and transaction PINs hashed using standard cryptographic algorithms.
@@ -301,7 +301,7 @@ Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 📖 Defense & Academic Demonstration
+##  Defense & Academic Demonstration
 
 A comprehensive evaluation and viva defense document generator is included in the project:
 ```bash
@@ -311,6 +311,6 @@ This generates `CyberForge_Demonstration_Defense_Guide.pdf`, which contains in-d
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
