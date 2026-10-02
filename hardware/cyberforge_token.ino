@@ -28,9 +28,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-// ==========================================
-// 1. CONFIGURATION — UPDATE THESE VALUES
-// ==========================================
 const char* WIFI_SSID     = "YOUR_WIFI_NAME";        // 2.4 GHz WiFi SSID
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";    // WiFi Password
 
@@ -44,9 +41,6 @@ const int ASSIGNED_USER_ID = 101;
 // Unique hardware token identifier reported in audit logs
 const char* HARDWARE_TOKEN_ID = "ESP32_CF_TOKEN_01";
 
-// ==========================================
-// 2. PIN DEFINITIONS
-// ==========================================
 #define ONBOARD_BOOT_BUTTON 0   // Built-in physical button on ESP32 board!
 #define BUTTON_APPROVE_PIN 18   // Optional wire: touch to GND to approve
 #define BUTTON_REJECT_PIN  21   // Optional wire: touch to GND to reject
@@ -61,9 +55,6 @@ const char* HARDWARE_TOKEN_ID = "ESP32_CF_TOKEN_01";
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 bool oledAvailable = false;
 
-// ==========================================
-// DISPLAY HELPER FUNCTIONS
-// ==========================================
 void showScreen(const char* title, const char* line1, const char* line2 = "", const char* line3 = "") {
   Serial.println("----------------------------------------");
   Serial.printf("[%s]\n", title);
@@ -94,9 +85,6 @@ void showScreen(const char* title, const char* line1, const char* line2 = "", co
   display.display();
 }
 
-// ==========================================
-// SETUP
-// ==========================================
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -152,9 +140,6 @@ void setup() {
   }
 }
 
-// ==========================================
-// SEND VERIFICATION RESULT TO BACKEND
-// ==========================================
 bool sendVerification(int transactionId, const char* status) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("[ERROR] WiFi not connected. Cannot send verification.");
@@ -191,9 +176,6 @@ bool sendVerification(int transactionId, const char* status) {
   return success;
 }
 
-// ==========================================
-// HANDLE PENDING TRANSACTION (PROMPT USER)
-// ==========================================
 void handlePendingTransaction(int transactionId, float amount, const char* recipient) {
   Serial.printf("\n🚨 HIGH RISK TRANSACTION DETECTED!\n");
   Serial.printf("   Transaction ID : %d\n", transactionId);
@@ -263,9 +245,6 @@ void handlePendingTransaction(int transactionId, float amount, const char* recip
   showScreen("CyberForge Token", "System Active", "Monitoring for alerts");
 }
 
-// ==========================================
-// MAIN POLLING LOOP
-// ==========================================
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     digitalWrite(STATUS_LED_PIN, LOW);

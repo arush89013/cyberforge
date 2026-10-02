@@ -92,9 +92,6 @@ if (document.getElementById("loginForm")) initAuthPage();
 if (document.getElementById("transactionList")) initDashboardPage();
 if (document.getElementById("sendMoneyButton")) initTransferPage();
 
-// ========================================
-// 1. AUTHENTICATION PAGE LOGIC
-// ========================================
 function initAuthPage() {
     const tabLogin = document.getElementById("tabLogin");
     const tabRegister = document.getElementById("tabRegister");
@@ -188,9 +185,6 @@ function initAuthPage() {
     });
 }
 
-// ========================================
-// 2. DASHBOARD PAGE LOGIC
-// ========================================
 async function initDashboardPage() {
     if (!activeUserId) {
         window.location.href = "index.html";
@@ -202,9 +196,6 @@ async function initDashboardPage() {
     document.getElementById("navProfileName").innerText = activeUserName;
     document.getElementById("userAvatar").innerText = activeUserName.charAt(0).toUpperCase();
 
-    // ========================================
-    // PROFILE MODAL LOGIC
-    // ========================================
     const profileModal = document.getElementById("profileModal");
     const navProfile = document.getElementById("navProfile");
     const userAvatar = document.getElementById("userAvatar");
@@ -319,9 +310,6 @@ async function initDashboardPage() {
     document.getElementById("setPinBtn").addEventListener("click", handlePinUpdate);
     document.getElementById("resetPinBtn").addEventListener("click", handlePinUpdate);
 
-    // ========================================
-    // EMAIL REGISTRATION LOGIC
-    // ========================================
     document.getElementById("registerEmailBtn").addEventListener("click", async () => {
         const email = await showCustomPrompt(
             "Register Email", 
@@ -417,9 +405,6 @@ async function initDashboardPage() {
     });
 }
 
-// ========================================
-// 3. TRANSFER PAGE LOGIC (with Typing Speed + OTP)
-// ========================================
 function initTransferPage() {
     if (!activeUserId) window.location.href = "index.html";
 
@@ -445,9 +430,6 @@ function initTransferPage() {
         }
     });
 
-    // -----------------------------------------------
-    // TYPING SPEED TRACKER
-    // -----------------------------------------------
     let firstKeystrokeTime = null;
 
     const recipientInput = document.getElementById("recipient");
@@ -462,9 +444,6 @@ function initTransferPage() {
     recipientInput.addEventListener("keydown", trackKeystroke);
     amountInput.addEventListener("keydown", trackKeystroke);
 
-    // -----------------------------------------------
-    // FLAG LABEL HELPER
-    // -----------------------------------------------
     const FLAG_LABELS = {
         "new_location":                  "🌐 New location detected",
         "new_device":                    "💻 New device detected",
@@ -507,9 +486,6 @@ function initTransferPage() {
         });
     }
 
-    // -----------------------------------------------
-    // OTP RESEND COUNTDOWN TIMER
-    // -----------------------------------------------
     let resendInterval = null;
 
     function startResendTimer() {
@@ -532,9 +508,6 @@ function initTransferPage() {
         }, 1000);
     }
 
-    // -----------------------------------------------
-    // SHOW OTP MODAL
-    // -----------------------------------------------
     function showOtpModal(transactionId, maskedEmail, amount, recipient) {
         document.getElementById("transferSecurity").classList.add("hidden");
         document.getElementById("otpModal").classList.remove("hidden");
@@ -622,9 +595,6 @@ function initTransferPage() {
         });
     }
 
-    // -----------------------------------------------
-    // SEND MONEY HANDLER
-    // -----------------------------------------------
     document.getElementById("sendMoneyButton").addEventListener("click", async () => {
         const recipient = document.getElementById("recipient").value;
         const amount = document.getElementById("amount").value;
@@ -703,9 +673,6 @@ function initTransferPage() {
         }
     });
 
-    // -----------------------------------------------
-    // HANDLE AUTH DECISION BASED ON AI RESPONSE
-    // -----------------------------------------------
     async function handleAuthDecision(data, payload, amount, recipient) {
         if (data.action === "INSUFFICIENT_FUNDS") {
             alert("Transaction Failed: " + data.message);

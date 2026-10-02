@@ -57,7 +57,6 @@ def get_db():
 
 
 def mask_email(email_str: str) -> str:
-    """Masks an email address (e.g., test@example.com -> t**t@example.com)."""
     if not email_str: return None
     try:
         email = decrypt_email(email_str)
@@ -71,9 +70,6 @@ def mask_email(email_str: str) -> str:
         return email
 
 
-# ============================================================
-# HELPER: Compute user behavioral baselines from history
-# ============================================================
 def compute_user_baselines(db: Session, user_id: int, recipient: str = None) -> dict:
     completed_statuses = ["Completed", "OTP_Awaiting", "ESP32_Awaiting"]
 
@@ -134,9 +130,6 @@ def compute_user_baselines(db: Session, user_id: int, recipient: str = None) -> 
     }
 
 
-# ============================================================
-# TRANSFER — Core transaction endpoint
-# ============================================================
 @app.post("/api/transactions/transfer")
 def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == tx.user_id).first()
@@ -284,9 +277,6 @@ def initiate_transfer(tx: schemas.TransactionCreate, request: Request, db: Sessi
     return response
 
 
-# ============================================================
-# OTP — Verify submitted OTP
-# ============================================================
 @app.post("/api/otp/verify")
 def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
     otp_record = db.query(models.OTPRecord).filter(
@@ -329,9 +319,6 @@ def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
     }
 
 
-# ============================================================
-# OTP — Resend OTP for a pending transaction
-# ============================================================
 @app.post("/api/otp/resend/{transaction_id}")
 def resend_otp(transaction_id: int, db: Session = Depends(get_db)):
     tx = db.query(models.Transaction).filter(
@@ -372,9 +359,6 @@ def resend_otp(transaction_id: int, db: Session = Depends(get_db)):
     }
 
 
-# ============================================================
-# HARDWARE — ESP32 polling & verification
-# ============================================================
 @app.get("/api/hardware/pending_requests")
 def check_hardware_requests(user_id: int = 0, db: Session = Depends(get_db)):
     # 1. Look for a pending transaction for this user specifically
@@ -434,9 +418,6 @@ def verify_hardware(verification: schemas.HardwareVerify, db: Session = Depends(
     return {"message": f"Transaction {tx.id} updated to {tx.status}"}
 
 
-# ============================================================
-# USER — Registration, login, PIN & Email management
-# ============================================================
 @app.post("/api/users/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Check if username already taken
@@ -532,9 +513,6 @@ def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"status": "success", "user_id": db_user.id, "username": db_user.username}
 
 
-# ============================================================
-# TRANSACTIONS — Recent history
-# ============================================================
 @app.get("/api/transactions/recent/{user_id}")
 def get_recent_transactions(user_id: int, db: Session = Depends(get_db)):
     return db.query(models.Transaction).filter(
@@ -564,9 +542,6 @@ def get_transaction_status(transaction_id: int, db: Session = Depends(get_db)):
 #                 .\venv\Scripts\Activate
 #                 uvicorn main:app --reload
 
-# ============================================================
-# USER — Delete account
-# ============================================================
 @app.delete("/api/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -579,4 +554,4 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     
     db.delete(user)
     db.commit()
-    return {"status": "success", "message": "User deleted successfully"}
+    return {"status": "success", "message": "User deleted successfully"}

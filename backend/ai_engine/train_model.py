@@ -17,17 +17,7 @@ import os
 
 
 def generate_behavioral_data():
-    """
-    Generate synthetic transaction data with realistic distributions.
-    
-    Instead of uniform random, uses Gaussian mixtures to model real-world
-    banking transaction patterns more accurately.
-    """
     np.random.seed(42)
-
-    # ============================================================
-    # NORMAL TRANSACTIONS (multiple realistic sub-populations)
-    # ============================================================
 
     # Sub-population 1: Daily small payments (coffee, groceries, transport)
     n_micro = 2000
@@ -98,9 +88,6 @@ def generate_behavioral_data():
         "time_norm":     np.clip(np.random.normal(0.50, 0.15, n_mule), 0.1, 0.9),  # Daytime
     })
 
-    # ============================================================
-    # EDGE CASES: Borderline transactions
-    # ============================================================
     n_edge = 350
     df_edge = pd.DataFrame({
         "amount_norm":   np.clip(np.random.uniform(0.08, 0.35, n_edge), 0, 1),
@@ -118,7 +105,6 @@ def generate_behavioral_data():
 
 
 def train_and_save_model():
-    """Train IsolationForest on 5-feature behavioral data and save the model."""
     df = generate_behavioral_data()
     features = ["amount_norm", "location_risk", "device_risk", "typing_norm", "time_norm"]
 

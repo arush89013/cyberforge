@@ -10,7 +10,6 @@ body {
     color: #202124;
 }
 
-/* Login Page */
 
 .login-page {
     min-height: 100vh;
@@ -20,7 +19,6 @@ body {
     padding: 20px;
 }
 
-/* Login Card */
 
 .login-card {
     width: 420px;
@@ -31,7 +29,6 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Logo */
 
 .logo {
     display: flex;
@@ -64,7 +61,6 @@ body {
     margin-bottom: 35px;
 }
 
-/* Login Heading */
 
 .login-card h2 {
     font-size: 26px;
@@ -76,7 +72,6 @@ body {
     margin-bottom: 25px;
 }
 
-/* Form */
 
 label {
     display: block;
@@ -100,7 +95,6 @@ input:focus {
     border-color: #4285f4;
 }
 
-/* Login Button */
 
 .login-button {
     width: 100%;
@@ -119,7 +113,6 @@ input:focus {
     background: #303134;
 }
 
-/* Security Status */
 
 .security-status {
     margin-top: 25px;
@@ -140,7 +133,6 @@ input:focus {
     line-height: 1.5;
 }
 
-/* Loader */
 
 .loader {
     width: 28px;
@@ -158,13 +150,11 @@ input:focus {
     }
 }
 
-/* Hide element */
 
 .hidden {
     display: none;
 }
 
-/* Security Note */
 
 .security-note {
     text-align: center;
@@ -173,7 +163,6 @@ input:focus {
     font-size: 13px;
 }
 
-/* Mobile */
 
 @media (max-width: 500px) {
 
@@ -183,9 +172,6 @@ input:focus {
     }
 
 }
-/* =========================
-   DASHBOARD
-   ========================= */
 
 .dashboard-page {
     max-width: 700px;
@@ -193,7 +179,6 @@ input:focus {
     padding: 25px 20px 100px;
 }
 
-/* Header */
 
 .top-bar {
     display: flex;
@@ -222,7 +207,6 @@ input:focus {
     font-size: 20px;
 }
 
-/* Welcome */
 
 .welcome {
     margin-top: 35px;
@@ -238,7 +222,6 @@ input:focus {
     font-size: 28px;
 }
 
-/* Balance */
 
 .balance-card {
     margin-top: 25px;
@@ -262,7 +245,6 @@ input:focus {
     font-size: 13px;
 }
 
-/* Actions */
 
 .actions {
     display: grid;
@@ -301,7 +283,6 @@ input:focus {
     font-size: 13px;
 }
 
-/* Security */
 
 .security-card {
     display: flex;
@@ -334,7 +315,6 @@ input:focus {
     font-weight: bold;
 }
 
-/* Transactions */
 
 .transactions {
     margin-top: 30px;
@@ -394,7 +374,6 @@ input:focus {
     font-size: 14px;
 }
 
-/* Bottom Navigation */
 
 .bottom-nav {
     position: fixed;
@@ -429,7 +408,6 @@ input:focus {
 }
 
 
-/* Mobile */
 
 @media (max-width: 550px) {
 
@@ -442,10 +420,7 @@ input:focus {
         padding-right: 15px;
     }
 
-}/* =========================
-   TRANSFER PAGE
-   ========================= */
-
+}
 .transfer-page {
     max-width: 600px;
     margin: auto;
@@ -545,7 +520,6 @@ input:focus {
 }
 
 
-/* Transfer Security */
 
 .transfer-security {
     margin-top: 20px;
@@ -582,7 +556,6 @@ input:focus {
 }
 
 
-/* Transaction Result */
 
 .transaction-result {
     margin-top: 20px;
@@ -627,9 +600,6 @@ input:focus {
     font-size: 15px;
     cursor: pointer;
 }
-/* ========================================
-   CYBERFORGE DASHBOARD POLISH
-======================================== */
 
 .dashboard-page {
     max-width: 700px;
@@ -638,7 +608,6 @@ input:focus {
 }
 
 
-/* TOP HEADER */
 
 .top-bar {
     display: flex;
@@ -658,7 +627,6 @@ input:focus {
 }
 
 
-/* PROFILE */
 
 .profile {
     width: 46px;
@@ -676,7 +644,6 @@ input:focus {
 }
 
 
-/* WELCOME */
 
 .welcome {
     margin-top: 35px;
@@ -694,7 +661,6 @@ input:focus {
 }
 
 
-/* BALANCE CARD */
 
 .balance-card {
     margin-top: 25px;
@@ -726,7 +692,6 @@ input:focus {
 }
 
 
-/* ACTION BUTTONS */
 
 .actions {
     display: grid;
@@ -792,7 +757,6 @@ input:focus {
 }
 
 
-/* SECURITY CARD */
 
 .security-card {
     display: flex;
@@ -855,7 +819,6 @@ input:focus {
 }
 
 
-/* TRANSACTIONS */
 
 .transactions {
     margin-top: 32px;
@@ -886,7 +849,6 @@ input:focus {
 }
 
 
-/* TRANSACTION */
 
 .transaction {
     display: flex;
@@ -938,7 +900,6 @@ input:focus {
 }
 
 
-/* BOTTOM NAVIGATION */
 
 .bottom-nav {
     position: fixed;
@@ -993,7 +954,6 @@ input:focus {
 }
 
 
-/* MOBILE */
 
 @media (max-width: 550px) {
 
@@ -1012,9 +972,6 @@ input:focus {
     }
 
 }
-/* ========================================
-   CYBERFORGE DARK MOBILE UI
-======================================== */
 
 body {
     background: #0d0f11;
@@ -1023,7 +980,6 @@ body {
 }
 
 
-/* MAIN HOME */
 
 .cf-home {
     max-width: 720px;
@@ -1032,7 +988,6 @@ body {
 }
 
 
-/* HEADER */
 
 .cf-header {
     display: flex;
@@ -1093,7 +1048,6 @@ body {
 }
 
 
-/* SEARCH */
 
 .cf-search {
     display: flex;
@@ -1157,7 +1111,6 @@ body {
 }
 
 
-/* SECURITY BANNER */
 
 .security-banner {
     display: flex;
@@ -1240,7 +1193,6 @@ body {
 }
 
 
-/* QUICK ACTIONS */
 
 .quick-actions {
     display: grid;
@@ -1292,7 +1244,6 @@ body {
 }
 
 
-/* FEATURE CHIPS */
 
 .feature-chips {
     display: flex;
@@ -1345,7 +1296,6 @@ body {
 }
 
 
-/* BALANCE */
 
 .cf-balance {
     display: flex;
@@ -1417,7 +1367,6 @@ body {
 }
 
 
-/* SECTIONS */
 
 .cf-section {
     margin-top: 32px;
@@ -1446,7 +1395,6 @@ body {
 }
 
 
-/* PEOPLE */
 
 .people-row,
 .business-row {
@@ -1528,7 +1476,6 @@ body {
 }
 
 
-/* BUSINESSES */
 
 .business-logo,
 .bill-logo {
@@ -1575,7 +1522,6 @@ body {
 }
 
 
-/* BILLS */
 
 .airtel {
     background: #e92335;
@@ -1602,7 +1548,6 @@ body {
 }
 
 
-/* OFFERS */
 
 .offer-card {
     display: flex;
@@ -1661,7 +1606,6 @@ body {
 }
 
 
-/* TRANSACTIONS */
 
 .transactions-section {
     margin-bottom: 30px;
@@ -1692,7 +1636,6 @@ body {
 }
 
 
-/* BOTTOM NAV */
 
 .cf-bottom-nav {
     position: fixed;
@@ -1746,7 +1689,6 @@ body {
 }
 
 
-/* MOBILE */
 
 @media (max-width: 600px) {
 
@@ -1790,9 +1732,6 @@ body {
     }
 
 }
-/* ========================================
-   CYBERFORGE LOGIN UI
-======================================== */
 
 .cf-login-page {
     min-height: 100vh;
@@ -1814,7 +1753,6 @@ body {
 }
 
 
-/* LOGIN LOGO */
 
 .cf-login-logo {
     text-align: center;
@@ -1863,7 +1801,6 @@ body {
 }
 
 
-/* LOGIN CARD */
 
 .cf-login-card {
     width: min(430px, 100%);
@@ -1881,7 +1818,6 @@ body {
 }
 
 
-/* HEADING */
 
 .login-heading h2 {
     font-size: 25px;
@@ -1898,7 +1834,6 @@ body {
 }
 
 
-/* INPUTS */
 
 .cf-login-card label {
     display: block;
@@ -1944,7 +1879,6 @@ body {
 }
 
 
-/* LOGIN BUTTON */
 
 .cf-login-button {
     width: 100%;
@@ -1991,7 +1925,6 @@ body {
 }
 
 
-/* SECURITY STATUS */
 
 .cf-login-security {
     margin-top: 22px;
@@ -2040,7 +1973,6 @@ body {
 }
 
 
-/* PROTECTION */
 
 .cf-login-protection {
     display: flex;
@@ -2089,7 +2021,6 @@ body {
 }
 
 
-/* FOOTER */
 
 .cf-login-footer {
     margin-top: 22px;
@@ -2102,7 +2033,6 @@ body {
 }
 
 
-/* MOBILE */
 
 @media (max-width: 500px) {
 
@@ -2119,9 +2049,6 @@ body {
     }
 
 }
-/* ========================================
-   CYBERFORGE TRANSFER UI
-======================================== */
 
 .cf-transfer-page {
     max-width: 620px;
@@ -2133,7 +2060,6 @@ body {
 }
 
 
-/* HEADER */
 
 .cf-transfer-header {
     display: flex;
@@ -2174,7 +2100,6 @@ body {
 }
 
 
-/* BALANCE */
 
 .transfer-balance {
     display: flex;
@@ -2223,7 +2148,6 @@ body {
 }
 
 
-/* FORM CARD */
 
 .cf-transfer-card {
     padding: 27px;
@@ -2251,7 +2175,6 @@ body {
 }
 
 
-/* LABEL */
 
 .cf-transfer-card label {
     display: block;
@@ -2267,7 +2190,6 @@ body {
 }
 
 
-/* RECIPIENT INPUT */
 
 .transfer-input {
     height: 54px;
@@ -2306,7 +2228,6 @@ body {
 }
 
 
-/* AMOUNT */
 
 .transfer-amount {
     height: 70px;
@@ -2349,7 +2270,6 @@ body {
 }
 
 
-/* SECURITY INFO */
 
 .transfer-security-info {
     display: flex;
@@ -2386,7 +2306,6 @@ body {
 }
 
 
-/* SEND BUTTON */
 
 .cf-send-button {
     width: 100%;
@@ -2428,7 +2347,6 @@ body {
 }
 
 
-/* SECURITY STATUS */
 
 .cf-transfer-security {
     margin-top: 20px;
@@ -2485,7 +2403,6 @@ body {
 }
 
 
-/* RESULT */
 
 .cf-transaction-result {
     margin-top: 20px;
@@ -2560,7 +2477,6 @@ body {
 }
 
 
-/* MOBILE */
 
 @media (max-width: 500px) {
 
@@ -2574,16 +2490,12 @@ body {
     }
 
 }
-/* ========================================
-   CYBERFORGE SECURITY CENTER
-======================================== */
 
 .security-center {
     text-align: center;
 }
 
 
-/* ANIMATED SECURITY RING */
 
 .security-ring {
     width: 86px;
@@ -2637,7 +2549,6 @@ body {
 }
 
 
-/* SECURITY LABEL */
 
 .security-center-label {
     color: #63a8ff;
@@ -2652,7 +2563,6 @@ body {
 }
 
 
-/* TITLE */
 
 .security-center h3 {
     font-size: 18px;
@@ -2661,7 +2571,6 @@ body {
 }
 
 
-/* MESSAGE */
 
 .security-center > p {
     margin-top: 7px;
@@ -2674,7 +2583,6 @@ body {
 }
 
 
-/* SECURITY CHECKS */
 
 .security-checks {
     margin-top: 20px;
@@ -2707,7 +2615,6 @@ body {
 }
 
 
-/* CHECK ICON */
 
 .check-icon {
     width: 30px;
@@ -2770,7 +2677,6 @@ body {
 }
 
 
-/* CHECK TEXT */
 
 .security-check strong {
     display: block;
@@ -2791,7 +2697,6 @@ body {
 }
 
 
-/* RISK SCORE */
 
 .login-risk-score {
     margin-top: 18px;
@@ -2812,7 +2717,6 @@ body {
 }
 
 
-/* HIGH RISK STATE */
 
 .login-risk-score.high-risk {
     background: #302315;
@@ -2823,7 +2727,6 @@ body {
 }
 
 
-/* SAFE STATE */
 
 .login-risk-score.safe {
     background: #153325;
@@ -2832,16 +2735,12 @@ body {
 
     color: #6fe19a;
 }
-/* ========================================
-   CYBERFORGE TRANSFER SECURITY CENTER
-======================================== */
 
 .transfer-security-center {
     text-align: center;
 }
 
 
-/* SECURITY RING */
 
 .transfer-security-ring {
     width: 86px;
@@ -2876,7 +2775,6 @@ body {
 }
 
 
-/* LABEL */
 
 .transfer-security-label {
     color: #63a8ff;
@@ -2891,7 +2789,6 @@ body {
 }
 
 
-/* TITLE */
 
 .transfer-security-center h2 {
     font-size: 18px;
@@ -2900,7 +2797,6 @@ body {
 }
 
 
-/* MESSAGE */
 
 .transfer-security-center > p {
     margin-top: 7px;
@@ -2913,7 +2809,6 @@ body {
 }
 
 
-/* SECURITY CHECKS */
 
 .transfer-security-checks {
     margin-top: 20px;
@@ -2946,7 +2841,6 @@ body {
 }
 
 
-/* CHECK ICON */
 
 .transfer-check-icon {
     width: 30px;
@@ -2993,7 +2887,6 @@ body {
 }
 
 
-/* CHECK TEXT */
 
 .transfer-check strong {
     display: block;
@@ -3014,7 +2907,6 @@ body {
 }
 
 
-/* RISK SCORE */
 
 .cf-risk-score {
     margin-top: 18px;
@@ -3049,17 +2941,13 @@ body {
 
     color: #6fe19a;
 }
-/* ========================================
-   PROFILE & PIN MODAL UI
-======================================== */
 .cf-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(8, 11, 14, 0.85); /* Dark transparent overlay */
-    backdrop-filter: blur(4px);
+    background: rgba(8, 11, 14, 0.85);     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;

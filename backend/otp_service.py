@@ -1,10 +1,3 @@
-"""
-CyberForge OTP Service (via EmailJS)
-=====================================
-Handles OTP generation and delivery via EmailJS REST API.
-No Gmail password required — EmailJS handles auth through OAuth on their dashboard.
-Sends emails in a background thread so API responses are instant.
-"""
 
 import random
 import os
@@ -24,15 +17,10 @@ EMAILJS_API_URL = "https://api.emailjs.com/api/v1.0/email/send"
 
 
 def generate_otp() -> str:
-    """Generate a random 6-digit OTP code."""
     return str(random.randint(100000, 999999))
 
 
 def _send_email_worker(to_email: str, otp_code: str, amount: float, recipient: str):
-    """
-    Internal worker that runs in a background thread.
-    Sends the OTP email via EmailJS REST API.
-    """
     try:
         payload = {
             "service_id": EMAILJS_SERVICE_ID,
@@ -68,13 +56,6 @@ def _send_email_worker(to_email: str, otp_code: str, amount: float, recipient: s
 
 
 def send_otp_email(to_email: str, otp_code: str, amount: float, recipient: str) -> dict:
-    """
-    Send an OTP via EmailJS in a background thread.
-    Returns immediately so the API response is not blocked.
-
-    Returns:
-        {"success": True/False, "message": "..."}
-    """
     if not EMAILJS_SERVICE_ID or not EMAILJS_TEMPLATE_ID or not EMAILJS_PUBLIC_KEY:
         print(f"[OTP SERVICE] EmailJS not configured. OTP for {to_email}: {otp_code}")
         return {

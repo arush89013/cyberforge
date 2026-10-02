@@ -1,36 +1,3 @@
-"""
-CyberForge AI Risk Engine v3.0 — Advanced Multi-Factor Behavioral Analysis
-============================================================================
-A production-grade adaptive risk scoring engine that evaluates 8 independent
-risk dimensions and produces a weighted composite risk score (0–100).
-
-ARCHITECTURE:
-  Layer 1: Individual Sub-Score Functions (8 dimensions, each → 0.0 to 1.0)
-  Layer 2: Weighted Ensemble Aggregation (configurable weights)
-  Layer 3: Isolation Forest Anomaly Amplifier (ML-based secondary detector)
-  Layer 4: Velocity & Frequency Anomaly Detection (burst transaction patterns)
-  Layer 5: Trust Reward System (reduces friction for consistently safe users)
-  Layer 6: Hard Banking Guardrails (non-negotiable regulatory safety nets)
-
-DIMENSIONS:
-  1. Location anomaly      (15%)  — Is the IP new for this user?
-  2. Device trust           (15%)  — Is the device fingerprint recognized?
-  3. Typing biometrics      (12%)  — Is typing speed abnormal vs user average?
-  4. Amount deviation       (18%)  — Is the amount unusual for this user?
-  5. Time-of-day            (10%)  — Is the transaction at an unusual hour?
-  6. Transaction velocity   (12%)  — How many transactions in the last hour?
-  7. Recipient familiarity  (10%)  — Has user sent to this recipient before?
-  8. Amount-to-balance ratio (8%)  — What % of total balance is being sent?
-
-IMPROVEMENTS OVER v2.0:
-  - Smooth sigmoid curves instead of hard step functions for sub-scores
-  - Velocity detection (burst transaction fraud pattern)
-  - Recipient trust profiling
-  - Balance-relative risk assessment
-  - Multi-factor combination amplifiers (correlated risk escalation)
-  - Exponential trust decay for returning users
-  - Granular flag taxonomy with severity levels
-"""
 
 import pickle
 import os
@@ -40,9 +7,6 @@ from datetime import datetime, timezone
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# ---------------------------------------------------------------------------
-# Load the IsolationForest model (secondary anomaly detector)
-# ---------------------------------------------------------------------------
 MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "risk_model.pkl")
 
 try:
@@ -51,9 +15,6 @@ try:
 except FileNotFoundError:
     model = None
 
-# ---------------------------------------------------------------------------
-# Configurable weights — must sum to 1.0
-# ---------------------------------------------------------------------------
 WEIGHTS = {
     "location":           0.15,
     "device":             0.15,
@@ -65,49 +26,22 @@ WEIGHTS = {
     "balance_ratio":      0.08,
 }
 
-# ---------------------------------------------------------------------------
-# Mathematical utility: Smooth sigmoid scoring curve
-# ---------------------------------------------------------------------------
 def _sigmoid(x: float, midpoint: float = 0.5, steepness: float = 10.0) -> float:
-    """
-    Attempt to replace hard step-function thresholds with a smooth
-    sigmoid curve for more natural, continuous risk transitions.
-    
-    Returns a value in [0.0, 1.0].
-    - x < midpoint → score trends toward 0
-    - x > midpoint → score trends toward 1
-    - steepness controls how sharp the transition is
-    """
     try:
         return 1.0 / (1.0 + math.exp(-steepness * (x - midpoint)))
     except OverflowError:
         return 0.0 if x < midpoint else 1.0
 
 
-# ===================================================================
-# Sub-score functions — each returns a float in [0.0, 1.0]
-# ===================================================================
-
 def _location_score(is_known_ip: bool) -> float:
-    """IP-based location anomaly score."""
     return 0.05 if is_known_ip else 0.88
 
 
 def _device_score(is_known_device: bool) -> float:
-    """Device fingerprint trust score."""
     return 0.05 if is_known_device else 0.92
 
 
 def _typing_score(typing_speed_ms: float | None, avg_typing_speed_ms: float | None) -> float:
-    """
-    Typing speed biometric anomaly score using smooth sigmoid curves.
-
-    Instead of hard thresholds, we compute a continuous anomaly score
-    based on the ratio of current speed to the user's historical average.
-
-    Bot detection: < 500ms is almost certainly scripted automation.
-    Slow anomaly: > 4x user average suggests unfamiliar user or distraction.
-    """
     if typing_speed_ms is None:
         return 0.45  # No data → mild caution
 
@@ -141,13 +75,6 @@ def _typing_score(typing_speed_ms: float | None, avg_typing_speed_ms: float | No
 
 
 def _amount_score(amount: float, avg_amount: float | None) -> float:
-    """
-    Transaction amount anomaly score using smooth sigmoid curves.
-
-    Evaluates both:
-    1. Absolute amount thresholds (regulatory)
-    2. Deviation from user's personal spending pattern (behavioral)
-    """
     # Absolute thresholds (regulatory guardrails — these are sharp)
     if amount >= 100000:
         return 0.98
@@ -180,14 +107,6 @@ def _amount_score(amount: float, avg_amount: float | None) -> float:
 
 
 def _time_score(current_hour: int) -> float:
-    """
-    Time-of-day anomaly score using a Gaussian-like curve centered on peak
-    banking hours (10 AM – 6 PM). Smooth transitions instead of hard blocks.
-    
-    Peak safety: 10:00 – 18:00 (score ~0.05)
-    Moderate risk: 06:00 – 10:00 and 18:00 – 22:00
-    High risk: 00:00 – 06:00 (score ~0.85)
-    """
     # Center of safe window at hour 14 (2 PM), std dev ~5 hours
     center = 14.0
     std_dev = 5.0
@@ -203,15 +122,6 @@ def _time_score(current_hour: int) -> float:
 
 
 def _velocity_score(tx_count_last_hour: int, tx_count_last_day: int) -> float:
-    """
-    Transaction velocity anomaly score.
-
-    Detects burst-transaction fraud patterns where an attacker rapidly
-    drains an account with multiple small transactions.
-
-    Normal: 1-2 transactions per hour, 3-8 per day.
-    Suspicious: 4+ per hour or 12+ per day.
-    """
     # Hourly velocity
     if tx_count_last_hour >= 6:
         hour_risk = 0.95    # Severe burst
@@ -239,12 +149,6 @@ def _velocity_score(tx_count_last_hour: int, tx_count_last_day: int) -> float:
 
 
 def _recipient_score(is_known_recipient: bool, recipient_tx_count: int) -> float:
-    """
-    Recipient familiarity score.
-
-    First-time recipients carry higher risk. Frequently-used recipients
-    (family, rent, bills) are trusted.
-    """
     if not is_known_recipient:
         return 0.75     # Never sent to this person before
     
@@ -254,12 +158,6 @@ def _recipient_score(is_known_recipient: bool, recipient_tx_count: int) -> float
 
 
 def _balance_ratio_score(amount: float, balance: float) -> float:
-    """
-    Amount-to-balance ratio score.
-
-    Sending 80%+ of your balance in a single transaction is a strong
-    indicator of account takeover or social engineering fraud.
-    """
     if balance <= 0:
         return 0.5  # Can't compute ratio
     
@@ -279,37 +177,7 @@ def _balance_ratio_score(amount: float, balance: float) -> float:
         return 0.05     # Small fraction of balance
 
 
-# ===================================================================
-# Main evaluation function
-# ===================================================================
-
 def evaluate_risk(transaction_data: dict) -> dict:
-    """
-    Compute a composite risk score from 8 behavioral dimensions.
-
-    Parameters (in transaction_data):
-        amount              : float  — Transfer amount in ₹
-        is_known_ip         : bool   — Has this user transacted from this IP before?
-        is_known_device     : bool   — Has this user used this device before?
-        typing_speed_ms     : float  — Milliseconds from first keystroke to submit
-        avg_typing_speed    : float  — User's historical average typing speed
-        avg_amount          : float  — User's historical average transaction amount
-        current_hour        : int    — Hour of day (0-23)
-        tx_count_last_hour  : int    — Number of transactions in the last 60 minutes
-        tx_count_last_day   : int    — Number of transactions in the last 24 hours
-        is_known_recipient  : bool   — Has user sent to this recipient before?
-        recipient_tx_count  : int    — How many times user sent to this recipient
-        balance             : float  — User's current account balance
-
-    Returns:
-        {
-            "risk_score": float,        # 0.0 – 100.0
-            "risk_level": str,          # "LOW", "MEDIUM", "HIGH", "CRITICAL"
-            "flags": list[str],         # Human-readable risk flags
-            "sub_scores": dict,         # Individual dimension scores
-            "confidence": float,        # Engine confidence in assessment (0.0–1.0)
-        }
-    """
     # Extract all inputs with safe defaults
     amount             = float(transaction_data.get("amount", 0.0))
     is_known_ip        = transaction_data.get("is_known_ip", False)
@@ -325,9 +193,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
     balance            = transaction_data.get("balance", 1000000.0)
     travel_speed_kmh   = transaction_data.get("travel_speed_kmh", 0.0)
 
-    # ---------------------------------------------------------------
-    # 1. Compute individual sub-scores (each in [0.0, 1.0])
-    # ---------------------------------------------------------------
     loc_s   = _location_score(is_known_ip)
     dev_s   = _device_score(is_known_device)
     typ_s   = _typing_score(typing_speed_ms, avg_typing_speed)
@@ -348,17 +213,11 @@ def evaluate_risk(transaction_data: dict) -> dict:
         "balance_ratio":  round(bal_s, 3),
     }
 
-    # ---------------------------------------------------------------
-    # 2. Weighted ensemble → raw risk score (0–100)
-    # ---------------------------------------------------------------
     raw_risk = 0.0
     for dim, weight in WEIGHTS.items():
         raw_risk += weight * sub_scores[dim]
     raw_risk *= 100
 
-    # ---------------------------------------------------------------
-    # 3. IsolationForest secondary anomaly amplifier
-    # ---------------------------------------------------------------
     if model is not None:
         location_risk = 0.1 if is_known_ip else 0.85
         device_risk   = 0.1 if is_known_device else 0.90
@@ -403,9 +262,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
     if bal_s >= 0.6 and not is_known_recipient:
         raw_risk += 8.0   # Draining balance to unknown person
 
-    # ---------------------------------------------------------------
-    # 5. Trust reward — reduce friction for consistently safe users
-    # ---------------------------------------------------------------
     if is_known_ip and is_known_device and is_known_recipient:
         # Fully familiar context
         if amt_s <= 0.2 and typ_s <= 0.2 and vel_s <= 0.2:
@@ -418,9 +274,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
         if amt_s <= 0.3 and typ_s <= 0.3:
             raw_risk = min(raw_risk, 20.0)  # Trust the user's environment
 
-    # ---------------------------------------------------------------
-    # 6. Hard banking guardrails (non-negotiable regulatory rules)
-    # ---------------------------------------------------------------
     if travel_speed_kmh > 800:
         raw_risk = max(raw_risk, 95.0)  # Impossible Travel lockout
 
@@ -442,9 +295,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
     # Clamp final score
     risk_score = max(5.0, min(98.0, raw_risk))
 
-    # ---------------------------------------------------------------
-    # 7. Determine risk level
-    # ---------------------------------------------------------------
     if risk_score < 25:
         risk_level = "LOW"
     elif risk_score < 50:
@@ -454,9 +304,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
     else:
         risk_level = "CRITICAL"
 
-    # ---------------------------------------------------------------
-    # 8. Build granular human-readable flags with severity
-    # ---------------------------------------------------------------
     flags = []
     
     # Location flags
@@ -509,9 +356,6 @@ def evaluate_risk(transaction_data: dict) -> dict:
     if high_score_count >= 4:
         flags.append("multi_factor_anomaly")
 
-    # ---------------------------------------------------------------
-    # 9. Compute engine confidence
-    # ---------------------------------------------------------------
     # Confidence is higher when we have more historical data
     data_points = 0
     if avg_amount is not None:
