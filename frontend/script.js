@@ -257,6 +257,39 @@ async function initDashboardPage() {
         window.location.href = "index.html";
     });
 
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener("click", async () => {
+            const confirmDelete = await showCustomPrompt(
+                "Delete Account",
+                "Are you sure you want to permanently delete your account and all transaction history? This cannot be undone.",
+                "text",
+                "Type 'DELETE' to confirm"
+            );
+
+            if (confirmDelete === "DELETE") {
+                deleteAccountBtn.innerText = "Deleting...";
+                try {
+                    const res = await fetch(`${API_BASE}/users/${activeUserId}`, { method: "DELETE" });
+                    const data = await res.json();
+                    if (data.status === "success") {
+                        alert("Account deleted successfully.");
+                        localStorage.clear();
+                        window.location.href = "index.html";
+                    } else {
+                        alert("Failed to delete account: " + (data.message || "Unknown error"));
+                        deleteAccountBtn.innerText = "Delete Account";
+                    }
+                } catch (e) {
+                    alert("Network error.");
+                    deleteAccountBtn.innerText = "Delete Account";
+                }
+            } else if (confirmDelete !== null) {
+                alert("Account deletion cancelled.");
+            }
+        });
+    }
+
     // PIN Management Logic
     const handlePinUpdate = async () => {
         const newPin = await showCustomPrompt(

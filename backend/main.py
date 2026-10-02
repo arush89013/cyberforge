@@ -563,3 +563,20 @@ def get_transaction_status(transaction_id: int, db: Session = Depends(get_db)):
 #                 cd backend
 #                 .\venv\Scripts\Activate
 #                 uvicorn main:app --reload
+
+# ============================================================
+# USER — Delete account
+# ============================================================
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Delete related records
+    db.query(models.OTPRecord).filter(models.OTPRecord.user_id == user_id).delete()
+    db.query(models.Transaction).filter(models.Transaction.user_id == user_id).delete()
+    
+    db.delete(user)
+    db.commit()
+    return {"status": "success", "message": "User deleted successfully"}
