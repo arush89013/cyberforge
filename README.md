@@ -153,7 +153,7 @@ cyberforge/
 │   ├── database.py                  # SQLAlchemy engine & MySQL connection
 │   ├── main.py                      # FastAPI application routes & logic
 │   ├── models.py                    # Database schema models (Users, Tx, Logs)
-│   ├── otp_service.py               # Cryptographic OTP generation & SMTP service
+│   ├── otp_service.py               # Cryptographic OTP generation & EmailJS service
 │   ├── schemas.py                   # Pydantic request/response schemas
 │   ├── update.py                    # Database migration & schema patch utility
 │   └── requirements.txt             # Python dependencies
@@ -219,8 +219,10 @@ cyberforge/
    DB_PORT=3306
    DB_NAME=cyberforge_db
 
-   SMTP_EMAIL=your_email@gmail.com
-   SMTP_PASSWORD=your_app_password
+   EMAILJS_SERVICE_ID=your_emailjs_service_id
+   EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+   EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+   EMAILJS_PRIVATE_KEY=your_emailjs_private_key
    SECRET_KEY=your_generated_fernet_key
    ```
 
@@ -278,6 +280,7 @@ Open `http://localhost:3000` in your web browser.
 | :--- | :--- | :--- |
 | `POST` | `/api/auth/register` | Register a new user with encrypted PII and baseline balance. |
 | `POST` | `/api/auth/login` | Authenticate user credentials and return user profile. |
+| `DELETE` | `/api/users/{user_id}` | Delete user account and all associated data. |
 | `POST` | `/api/transactions/transfer` | Core transfer endpoint; evaluates AI risk and returns required action. |
 | `POST` | `/api/transactions/verify-otp` | Verifies 2FA Email OTP code for medium-risk transactions. |
 | `GET` | `/api/transactions/history/{user_id}` | Fetch transaction logs and risk scores for a user. |
