@@ -1,24 +1,26 @@
 """
-CyberForge OTP Service (Email via Gmail)
-========================================
-Handles OTP generation and delivery via Gmail SMTP.
+CyberForge OTP Service (via EmailJS)
+=====================================
+Handles OTP generation and delivery via EmailJS REST API.
+No Gmail password required — EmailJS handles auth through OAuth on their dashboard.
 Sends emails in a background thread so API responses are instant.
 """
 
 import random
 import os
-import smtplib
 import threading
-from email.message import EmailMessage
+import requests as http_requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS", "")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+# EmailJS configuration (set these in .env or Render environment variables)
+EMAILJS_SERVICE_ID = os.getenv("EMAILJS_SERVICE_ID", "")
+EMAILJS_TEMPLATE_ID = os.getenv("EMAILJS_TEMPLATE_ID", "")
+EMAILJS_PUBLIC_KEY = os.getenv("EMAILJS_PUBLIC_KEY", "")
+EMAILJS_PRIVATE_KEY = os.getenv("EMAILJS_PRIVATE_KEY", "")  # Optional, for extra security
 
-# SMTP connection timeout in seconds
-SMTP_TIMEOUT = 10
+EMAILJS_API_URL = "https://api.emailjs.com/api/v1.0/email/send"
 
 
 def generate_otp() -> str:
@@ -29,63 +31,55 @@ def generate_otp() -> str:
 def _send_email_worker(to_email: str, otp_code: str, amount: float, recipient: str):
     """
     Internal worker that runs in a background thread.
-    Handles the actual SMTP connection and email delivery.
+    Sends the OTP email via EmailJS REST API.
     """
     try:
-        msg = EmailMessage()
-        msg['Subject'] = 'CyberForge Security: Your OTP for Transaction'
-        msg['From'] = f"CyberForge Security <{GMAIL_ADDRESS}>"
-        msg['To'] = to_email
+        payload = {
+            "service_id": EMAILJS_SERVICE_ID,
+            "template_id": EMAILJS_TEMPLATE_ID,
+            "user_id": EMAILJS_PUBLIC_KEY,
+            "template_params": {
+                "to_email": to_email,
+                "otp_code": otp_code,
+                "amount": f"{amount:,.2f}",
+                "recipient": recipient,
+            }
+        }
 
-        body = f"""
-Dear User,
+        # Add private key if configured (recommended for server-side calls)
+        if EMAILJS_PRIVATE_KEY:
+            payload["accessToken"] = EMAILJS_PRIVATE_KEY
 
-A transaction of Rs.{amount:,.2f} to {recipient} has been initiated from your account.
+        response = http_requests.post(
+            EMAILJS_API_URL,
+            json=payload,
+            timeout=15
+        )
 
-Your One-Time Password (OTP) to authorize this transaction is:
+        if response.status_code == 200:
+            print(f"[OTP SERVICE] Email sent successfully to {to_email} via EmailJS")
+        else:
+            print(f"[OTP SERVICE] EmailJS error (HTTP {response.status_code}): {response.text}")
 
-    {otp_code}
-
-This OTP is valid for 5 minutes. Do not share this code with anyone.
-
-If you did not initiate this transaction, please contact CyberForge Support immediately.
-
-Stay Secure,
-The CyberForge AI Guard
-        """
-        msg.set_content(body)
-
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=SMTP_TIMEOUT) as smtp:
-            smtp.ehlo()
-            smtp.starttls()
-            smtp.ehlo()
-            smtp.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            smtp.send_message(msg)
-
-        print(f"[OTP SERVICE] Email sent successfully to {to_email}")
-
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"[OTP SERVICE] Gmail authentication failed: {e}")
-        print(f"[OTP SERVICE] Check that GMAIL_APP_PASSWORD is a valid App Password (not your Gmail password).")
-    except smtplib.SMTPException as e:
-        print(f"[OTP SERVICE] SMTP error sending email: {e}")
+    except http_requests.Timeout:
+        print(f"[OTP SERVICE] EmailJS request timed out for {to_email}")
     except Exception as e:
         print(f"[OTP SERVICE] Unexpected error sending email: {e}")
 
 
 def send_otp_email(to_email: str, otp_code: str, amount: float, recipient: str) -> dict:
     """
-    Send an OTP via Gmail SMTP in a background thread.
+    Send an OTP via EmailJS in a background thread.
     Returns immediately so the API response is not blocked.
 
     Returns:
         {"success": True/False, "message": "..."}
     """
-    if not GMAIL_ADDRESS or not GMAIL_APP_PASSWORD:
-        print(f"[OTP SERVICE] No Gmail credentials configured. OTP for {to_email}: {otp_code}")
+    if not EMAILJS_SERVICE_ID or not EMAILJS_TEMPLATE_ID or not EMAILJS_PUBLIC_KEY:
+        print(f"[OTP SERVICE] EmailJS not configured. OTP for {to_email}: {otp_code}")
         return {
             "success": True,
-            "message": f"OTP generated (Gmail credentials not set - check server console). Code: {otp_code}"
+            "message": f"OTP generated (EmailJS not configured - check server console). Code: {otp_code}"
         }
 
     # Launch email sending in a background thread so the API responds instantly
