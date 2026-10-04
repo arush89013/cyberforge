@@ -1,6 +1,6 @@
 const PROD_BACKEND_URL = "https://cyberforge-22d1.onrender.com/api";
-const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") 
-    ? "http://127.0.0.1:8000/api" 
+const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+    ? "http://127.0.0.1:8000/api"
     : PROD_BACKEND_URL;
 const activeUserId = localStorage.getItem("cf_user_id");
 const activeUserName = localStorage.getItem("cf_username");
@@ -12,7 +12,7 @@ function showCustomPrompt(title, message, inputType = "text", placeholder = "", 
         overlay.className = "cf-modal";
         overlay.style.zIndex = "9999";
         overlay.style.display = "flex";
-        
+
         const card = document.createElement("div");
         card.className = "cf-transfer-card";
         card.style.width = "100%";
@@ -25,7 +25,7 @@ function showCustomPrompt(title, message, inputType = "text", placeholder = "", 
         const closeBtn = document.createElement("span");
         closeBtn.innerHTML = "&times;";
         closeBtn.style.cssText = "position: absolute; right: 20px; top: 15px; font-size: 26px; color: #858e9a; cursor: pointer;";
-        
+
         const titleEl = document.createElement("h3");
         titleEl.innerText = title;
         titleEl.style.color = "#e5e9ee";
@@ -206,11 +206,11 @@ async function initDashboardPage() {
         try {
             const res = await fetch(`${API_BASE}/users/${activeUserId}/profile`);
             const profile = await res.json();
-            
+
             const totalBalance = document.getElementById("totalBalance");
             if (totalBalance && profile.balance !== undefined) {
                 // Format balance with Indian Rupee formatting
-                totalBalance.innerText = "₹" + profile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                totalBalance.innerText = "₹" + profile.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
 
             const emailStatus = document.getElementById("emailStatus");
@@ -227,7 +227,7 @@ async function initDashboardPage() {
             // Silently fail — profile status is non-critical
         }
     };
-    
+
     // Call it immediately on dashboard load to populate balance
     loadProfileStatus();
 
@@ -284,10 +284,10 @@ async function initDashboardPage() {
     // PIN Management Logic
     const handlePinUpdate = async () => {
         const newPin = await showCustomPrompt(
-            "Transaction PIN", 
-            "Enter your new 4-digit transaction PIN:", 
-            "number", 
-            "****", 
+            "Transaction PIN",
+            "Enter your new 4-digit transaction PIN:",
+            "number",
+            "****",
             true
         );
         if (newPin && newPin.length === 4 && !isNaN(newPin)) {
@@ -312,9 +312,9 @@ async function initDashboardPage() {
 
     document.getElementById("registerEmailBtn").addEventListener("click", async () => {
         const email = await showCustomPrompt(
-            "Register Email", 
-            "Enter your email address:", 
-            "email", 
+            "Register Email",
+            "Enter your email address:",
+            "email",
             "user@domain.com"
         );
         if (!email) return;
@@ -389,10 +389,10 @@ async function initDashboardPage() {
         const item = document.createElement("div");
         item.className = "transaction";
         item.style = "border-bottom: 1px solid #252b32; padding: 15px 3px;";
-        
+
         const initial = tx.recipient_account.charAt(0).toUpperCase();
         const dateStr = new Date(tx.timestamp).toLocaleDateString("en-IN");
-        
+
         item.innerHTML = `
             <div class="transaction-icon" style="background: #202630; color: #79b6ff;">${initial}</div>
             <div class="transaction-info">
@@ -415,10 +415,10 @@ function initTransferPage() {
             .then(res => res.json())
             .then(profile => {
                 if (profile && profile.balance !== undefined) {
-                    transferBalanceEl.innerText = "₹" + profile.balance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    transferBalanceEl.innerText = "₹" + profile.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
     }
 
     let currentPendingTransactionId = null;
@@ -445,21 +445,21 @@ function initTransferPage() {
     amountInput.addEventListener("keydown", trackKeystroke);
 
     const FLAG_LABELS = {
-        "new_location":                  "🌐 New location detected",
-        "new_device":                    "💻 New device detected",
-        "bot_speed_detected":            "🤖 Bot-like speed detected",
-        "automated_input_suspected":     "⚡ Automated input suspected",
-        "unusual_typing_pattern":        "⌨️ Unusual typing pattern",
-        "unusual_amount":                "💰 Unusual transaction amount",
-        "extreme_amount":                "🚨 Extreme transaction amount",
-        "unusual_hour":                  "🌙 Transaction at unusual hour",
-        "rapid_burst_transactions":      "⚡ Rapid burst transactions",
-        "elevated_transaction_frequency":"📊 Elevated transaction frequency",
-        "new_recipient":                 "👤 New recipient",
-        "account_drain_attempt":         "🚨 Account drain attempt",
-        "large_balance_proportion":      "💳 Large balance proportion",
-        "multi_factor_anomaly":          "⚠️ Multi-factor anomaly detected",
-        "impossible_travel_detected":    "✈️ Impossible travel speed detected",
+        "new_location": "🌐 New location detected",
+        "new_device": "💻 New device detected",
+        "bot_speed_detected": "🤖 Bot-like speed detected",
+        "automated_input_suspected": "⚡ Automated input suspected",
+        "unusual_typing_pattern": "⌨️ Unusual typing pattern",
+        "unusual_amount": "💰 Unusual transaction amount",
+        "extreme_amount": "🚨 Extreme transaction amount",
+        "unusual_hour": "🌙 Transaction at unusual hour",
+        "rapid_burst_transactions": "⚡ Rapid burst transactions",
+        "elevated_transaction_frequency": "📊 Elevated transaction frequency",
+        "new_recipient": "👤 New recipient",
+        "account_drain_attempt": "🚨 Account drain attempt",
+        "large_balance_proportion": "💳 Large balance proportion",
+        "multi_factor_anomaly": "⚠️ Multi-factor anomaly detected",
+        "impossible_travel_detected": "✈️ Impossible travel speed detected",
     };
 
     const CRITICAL_FLAGS = ["bot_speed_detected", "account_drain_attempt", "extreme_amount", "multi_factor_anomaly", "rapid_burst_transactions", "impossible_travel_detected"];
@@ -473,14 +473,14 @@ function initTransferPage() {
             const label = FLAG_LABELS[flag] || flag;
             const span = document.createElement("span");
             span.innerText = label;
-            
+
             let bgColor = "#1a2a1a"; let textColor = "#6fe19a"; let borderColor = "#2d4a2d";
             if (CRITICAL_FLAGS.includes(flag)) {
                 bgColor = "#2a1a1a"; textColor = "#ff7474"; borderColor = "#4a2020";
             } else if (WARNING_FLAGS.includes(flag)) {
                 bgColor = "#2a2a1a"; textColor = "#ffc45c"; borderColor = "#4a3d20";
             }
-            
+
             span.style.cssText = `background:${bgColor}; color:${textColor}; font-size:11px; padding:4px 10px; border-radius:12px; border:1px solid ${borderColor}; margin: 2px 3px; display: inline-block;`;
             container.appendChild(span);
         });
@@ -752,10 +752,10 @@ function initTransferPage() {
         }
         else if (data.action === "REQUIRE_PIN") {
             const enteredPin = await showCustomPrompt(
-                "Security Check", 
-                "Enter your 4-digit Transaction PIN to approve this transfer:", 
-                "number", 
-                "****", 
+                "Security Check",
+                "Enter your 4-digit Transaction PIN to approve this transfer:",
+                "number",
+                "****",
                 true
             );
 
