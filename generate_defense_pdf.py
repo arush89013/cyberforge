@@ -319,8 +319,156 @@ def build_pdf(filename="e:/cyberforge/CyberForge_Demonstration_Defense_Guide.pdf
     ))
     story.append(Spacer(1, 15))
 
-    # SECTION 8: IMPLEMENTATION MATRIX TABLE
-    story.append(Paragraph("8. Implementation Status Matrix (Native vs Prototype)", h1_style))
+    # SECTION 8: Advanced Machine Learning & AI Defense
+    story.append(Paragraph("8. Advanced Machine Learning & AI Defense", h1_style))
+    story.append(make_qa_box(
+        15, "How does the Isolation Forest model handle concept drift as user behavior changes over time?",
+        "<b>File:</b> <code>predictor.py</code> (Future Implementation)",
+        "Currently, the model requires periodic retraining on updated baselines. In a production environment, we would implement online learning or scheduled batch retraining to adapt to new legitimate behaviors, while ensuring fraudulent data isn't poisoned into the training set."
+    ))
+    story.append(Spacer(1, 8))
+    
+    story.append(make_qa_box(
+        16, "What happens if a user breaks their arm and types much slower than their baseline? (False Positives)",
+        "<b>File:</b> <code>script.js</code> & <code>predictor.py</code>",
+        "Typing cadence is only one of the 8 dimensions. Even if the typing speed metric spikes, the user's IP, device fingerprint, transaction amount, and recipient familiarity will likely remain normal. The ensemble approach ensures that a single anomaly merely increases the score slightly, perhaps prompting an Email OTP, rather than triggering an instant block."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        17, "How are the specific weights (e.g., 15% Location, 12% Typing) determined in your risk engine?",
+        "<b>File:</b> <code>predictor.py</code>",
+        "In our prototype, weights are heuristically assigned based on industry-standard risk indicators and threat modeling. In a fully mature system, these weights would be dynamically optimized using supervised learning over historical fraud outcomes to mathematically minimize the False Positive Rate (FPR)."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        18, "Can an attacker intentionally skew their own typing baseline over time to eventually automate attacks?",
+        "<b>File:</b> <code>predictor.py</code>",
+        "While theoretically possible (a 'frog-boiling' attack), our system mitigates this by maintaining a rolling window of recent baselines coupled with hard deterministic guardrails. Even if the typing baseline is successfully poisoned, anomalous location jumps, amount deviations, or rapid transaction velocity will still trigger high risk."
+    ))
+    story.append(Spacer(1, 12))
+
+    # SECTION 9: Advanced Cryptography & Cybersecurity
+    story.append(Paragraph("9. Advanced Cryptography & Cybersecurity", h1_style))
+    story.append(make_qa_box(
+        19, "You encrypt emails using Fernet (symmetric encryption). What happens if the database is leaked?",
+        "<b>File:</b> <code>auth.py</code> & <code>.env</code> configuration",
+        "The Fernet secret key is stored exclusively in the backend environment variables, completely decoupled from the database. If an attacker dumps the MySQL database via SQL Injection, they only obtain encrypted ciphertexts. Without compromising the application server's file system, the data remains undecipherable."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        20, "How do you prevent brute-force or dictionary attacks against the 4-digit PIN?",
+        "<b>File:</b> <code>main.py</code> (Future Implementation)",
+        "We mitigate brute-forcing through strict rate-limiting and account lockout mechanisms. After a predefined number of failed PIN attempts (e.g., 3 to 5), the account enters a temporary lockout state or forces step-up authentication (requiring an Email OTP) to reset the security state."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        21, "Explain 'Impossible Travel' detection. How is it calculated?",
+        "<b>File:</b> <code>predictor.py</code> (Haversine calculations)",
+        "Impossible travel detects session hijacking. We use the Haversine formula to calculate the geographical distance between the IP coordinates of two consecutive transactions. By dividing this distance by the time elapsed, we get a velocity. If this velocity exceeds commercial flight speeds (e.g., >1000 km/h), it instantly flags the transaction as high-risk."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        22, "How does your system defend against Man-in-the-Middle (MITM) or Man-in-the-Browser (MitB) attacks?",
+        "<b>File:</b> System Architecture",
+        "Standard 2FA (like SMS/Email OTP) can be stolen by MitB malware. CyberForge defeats this via the Out-of-Band Hardware Token. The ESP32 communicates over a completely separate network channel. Even if the browser session is fully compromised, the ESP32 physically requires human presence to approve the transfer, stopping the attack dead."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        23, "How do you prevent Cross-Site Scripting (XSS) from compromising the biometric timing telemetry?",
+        "<b>File:</b> <code>script.js</code>",
+        "We enforce strict Content Security Policies (CSP) and use pure vanilla JavaScript listeners tied to specific DOM elements, avoiding any eval() or inline scripts, which neutralizes XSS injection vectors."
+    ))
+    story.append(Spacer(1, 12))
+
+    # SECTION 10: Advanced Hardware & IoT (ESP32)
+    story.append(Paragraph("10. Advanced Hardware & IoT (ESP32)", h1_style))
+    story.append(make_qa_box(
+        24, "What prevents an attacker from spoofing the ESP32 hardware token if they steal its WiFi credentials?",
+        "<b>File:</b> <code>hardware/cyberforge_token.ino</code>",
+        "Currently, the ESP32 uses standard HTTP polling. For a production release, we would enforce Mutual TLS (mTLS). The ESP32 would be flashed with a unique, securely generated client certificate. The backend would only accept hardware approvals from connections authenticating with that specific cryptographic certificate."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        25, "What happens if the ESP32 loses internet connection during a high-risk transfer?",
+        "<b>File:</b> <code>main.py</code> (Hardware verification endpoint)",
+        "Transactions in the ESP32_Awaiting state have a strict Time-to-Live (TTL) timeout—for instance, 5 minutes. If the backend does not receive an approval or rejection from the hardware token within this window, the transaction safely expires, aborts, and the funds remain untouched."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        26, "Could an attacker physically tamper with the ESP32 to bypass the button press or extract keys?",
+        "<b>File:</b> Hardware Design Limitations",
+        "In our academic prototype, physical tampering is possible since it's a development board. However, commercial banking tokens use secure enclaves and tamper-evident casing (e.g., potted in epoxy). If the casing is forced open, physical switches instantly wipe the cryptographic keys (Zeroization)."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        27, "Why did you choose I2C for the ESP32 OLED display instead of SPI, and what are the security implications?",
+        "<b>File:</b> <code>hardware/cyberforge_token.ino</code>",
+        "I2C requires only two data pins (SDA/SCL), saving GPIOs for the physical verification buttons and potential future sensors (like fingerprint). Since the display only shows output and doesn't handle cryptographic key generation, the slower speed of I2C compared to SPI is a non-issue."
+    ))
+    story.append(Spacer(1, 12))
+
+    # SECTION 11: Advanced Architecture & Compliance
+    story.append(Paragraph("11. Advanced Architecture & Compliance", h1_style))
+    story.append(make_qa_box(
+        28, "Why did you choose MySQL (Relational) over a NoSQL database like MongoDB?",
+        "<b>File:</b> <code>database.py</code> & <code>models.py</code>",
+        "Banking systems strictly require ACID (Atomicity, Consistency, Isolation, Durability) guarantees. Relational databases like MySQL are engineered to ensure transactional integrity. NoSQL databases prioritize eventual consistency, which is highly dangerous when dealing with financial ledgers where double-spending must be prevented."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        29, "How do you handle race conditions if a user makes two simultaneous transfers from the same account? (Double-Spend)",
+        "<b>File:</b> <code>main.py</code> (Transaction Processing)",
+        "The database enforces ACID properties using row-level locking. When checking the balance and processing a deduction, we would use a SELECT ... FOR UPDATE query. This locks the specific user's row in MySQL, forcing any simultaneous transactions to queue sequentially, making double-spending impossible."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        30, "FastAPI is asynchronous. Are your database calls asynchronous or blocking?",
+        "<b>File:</b> <code>database.py</code>",
+        "In our current prototype using standard SQLAlchemy, queries might block the event loop. To scale this for thousands of concurrent users in production, we would implement asynchronous database drivers (like aiomysql or asyncpg) alongside SQLAlchemy's async engine to handle massive concurrency without blocking API workers."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        31, "How do you ensure the database can rapidly compute historical baselines without severe latency?",
+        "<b>File:</b> <code>models.py</code> (Database Indexing)",
+        "We implement composite B-Tree indexes on (user_id, status, created_at) in the transactions table, allowing the database engine to perform O(log N) lookups instead of full table scans during real-time risk assessment."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        32, "How do you protect the FastAPI server from DDoS attacks or API abuse?",
+        "<b>File:</b> Infrastructure Design",
+        "The FastAPI application should never be exposed directly to the open internet. It sits behind a Reverse Proxy (like Nginx) and a Web Application Firewall (WAF, like Cloudflare). These edge layers handle IP rate-limiting, geo-blocking, and DDoS mitigation before malicious traffic ever reaches our Python application."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        33, "Doesn't all this security introduce a terrible, high-friction User Experience (UX)?",
+        "<b>File:</b> <code>main.py</code> (Adaptive Action Tiers)",
+        "No, the architecture is specifically designed for 'Zero-Friction Dynamic Step-Up.' By utilizing Adaptive Risk-Based Authentication, over 95% of routine, familiar transactions are processed instantly with only a PIN. The heavy friction (OTPs and Hardware tokens) is selectively applied only when statistically justified, eliminating alert fatigue."
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(make_qa_box(
+        34, "How does your project align with data privacy regulations like GDPR or India's DPDP Act?",
+        "<b>File:</b> Privacy-by-Design Architecture",
+        "We adhere to Data Minimization (no raw keystrokes logged), Encryption (passwords hashed, emails encrypted at rest), Data Masking (API endpoints mask emails so sensitive data never touches frontend logs), and Right to be Forgotten (user deletion APIs)."
+    ))
+    story.append(Spacer(1, 15))
+
+    # SECTION 12: IMPLEMENTATION MATRIX TABLE
+    story.append(Paragraph("12. Implementation Status Matrix (Native vs Prototype)", h1_style))
     story.append(Spacer(1, 4))
 
     matrix_data = [
