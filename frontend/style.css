@@ -2961,3 +2961,29 @@ body {
     opacity: 0;
     pointer-events: none;
 }
+
+/* Added styling for sharp logo rendering */
+.logo-image {
+    width: 1em;
+    height: auto;
+    vertical-align: middle;
+    /* Use crisp edges to ensure sharpness without blur */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    object-fit: contain;
+}
+
+.cf-login-icon .logo-image {
+    width: 48px;
+    height: 48px;
+}
+
+.cf-logo .logo-image {
+    width: 32px;
+    height: 32px;
+}
+
+.transfer-security-info span .logo-image {
+    width: 24px;
+    height: 24px;
+}
